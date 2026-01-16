@@ -2,6 +2,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import KnowledgeBase from './components/KnowledgeBase';
 import ChatInterface from './components/ChatInterface';
+import DocsModal from './components/DocsModal';
 import { DocumentItem, ChatMessage, AppStatus, ModelType } from './types';
 import { performResearch } from './geminiService';
 
@@ -36,6 +37,7 @@ const App: React.FC = () => {
   const [status, setStatus] = useState<AppStatus>(AppStatus.IDLE);
   const [useSearch, setUseSearch] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isDocsOpen, setIsDocsOpen] = useState(false);
 
   // Persistence Effects
   useEffect(() => {
@@ -174,6 +176,9 @@ const App: React.FC = () => {
 
   return (
     <div className={`flex h-screen w-full overflow-hidden transition-colors duration-300 ${isDarkMode ? 'dark bg-zinc-950' : 'bg-white'}`}>
+      {/* Modals */}
+      <DocsModal isOpen={isDocsOpen} onClose={() => setIsDocsOpen(false)} />
+
       {/* Mobile Backdrop */}
       {isSidebarOpen && (
         <div 
@@ -191,6 +196,7 @@ const App: React.FC = () => {
         onClose={() => setIsSidebarOpen(false)}
         onClearHistory={handleClearHistory}
         onExportSession={handleExportSession}
+        onOpenDocs={() => setIsDocsOpen(true)}
       />
 
       {/* Main Chat Interface */}
