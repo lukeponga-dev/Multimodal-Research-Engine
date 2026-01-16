@@ -1,0 +1,8 @@
+{
+  "name": "Nexus Research Agent",
+  "description": "A high-performance research platform that manages massive datasets in context memory while leveraging Gemini 3's real-time Google Search grounding for up-to-the-minute accuracy.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
