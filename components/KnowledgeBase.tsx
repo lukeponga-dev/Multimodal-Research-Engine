@@ -8,6 +8,8 @@ interface KnowledgeBaseProps {
   onRemoveDocument: (id: string) => void;
   isOpen?: boolean;
   onClose?: () => void;
+  onClearHistory: () => void;
+  onExportSession: () => void;
 }
 
 const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ 
@@ -15,7 +17,9 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
   onAddDocument, 
   onRemoveDocument,
   isOpen = false,
-  onClose
+  onClose,
+  onClearHistory,
+  onExportSession
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -60,7 +64,7 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
         </h2>
         <div className="flex items-center gap-2">
           <span className="text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-2 py-0.5 rounded-full font-medium">
-            {documents.length} Items
+            {documents.length}
           </span>
           <button onClick={onClose} className="md:hidden text-slate-400 hover:text-slate-600 dark:text-zinc-500">
             <i className="fa-solid fa-xmark"></i>
@@ -72,7 +76,7 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
         <div className="group relative border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-xl p-4 transition-all hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10 flex flex-col items-center justify-center cursor-pointer" 
              onClick={() => fileInputRef.current?.click()}>
           <i className="fa-solid fa-upload text-slate-400 dark:text-zinc-600 group-hover:text-indigo-400 text-xl mb-2"></i>
-          <p className="text-xs text-slate-500 dark:text-zinc-500 font-medium group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Add Text or Image</p>
+          <p className="text-xs text-slate-500 dark:text-zinc-500 font-medium group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Add Data</p>
           <input 
             type="file" 
             ref={fileInputRef} 
@@ -99,33 +103,55 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
                 <i className="fa-solid fa-trash-can text-xs"></i>
               </button>
             </div>
-            {doc.type === 'image' ? (
-              <div className="mt-2 h-16 w-full rounded overflow-hidden bg-slate-100 dark:bg-zinc-800">
-                <img src={doc.content} alt={doc.name} className="h-full w-full object-cover" />
-              </div>
-            ) : (
-              <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-2 font-mono truncate">
-                {doc.content.substring(0, 100)}
-              </p>
-            )}
           </div>
         ))}
 
         {documents.length === 0 && (
           <div className="text-center py-10">
             <i className="fa-solid fa-database text-slate-200 dark:text-zinc-800 text-4xl mb-3"></i>
-            <p className="text-sm text-slate-400 dark:text-zinc-600 px-4 italic">No data currently loaded.</p>
+            <p className="text-sm text-slate-400 dark:text-zinc-600 px-4 italic">Empty memory.</p>
           </div>
         )}
       </div>
 
-      <div className="p-4 bg-slate-50 dark:bg-zinc-900 border-t border-slate-200 dark:border-zinc-800">
+      <div className="p-4 bg-slate-50 dark:bg-zinc-900 border-t border-slate-200 dark:border-zinc-800 space-y-4">
+        {/* Simplified Docs */}
+        <div className="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg p-3 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mb-2">Documentation</p>
+          <p className="text-[10px] text-slate-500 dark:text-zinc-400 leading-relaxed mb-2">
+            Nexus maintains your data in local context memory for persistent research analysis.
+          </p>
+          <a 
+            href="https://ai.studio/apps/drive/15fS-az-tLgT3tglaU4AH-csJwjG-5fxB?fullscreenApplet=true"
+            target="_blank"
+            rel="noreferrer"
+            className="text-[10px] text-indigo-500 hover:underline font-bold flex items-center gap-1"
+          >
+            <i className="fa-solid fa-link"></i> External Studio Access
+          </a>
+        </div>
+
+        {/* Action Buttons Moved Here */}
+        <div className="grid grid-cols-2 gap-2">
+          <button 
+            onClick={onExportSession}
+            className="text-[10px] font-bold py-2 px-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-all flex items-center justify-center gap-2"
+          >
+            <i className="fa-solid fa-file-export"></i> Export
+          </button>
+          <button 
+            onClick={onClearHistory}
+            className="text-[10px] font-bold py-2 px-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-400 hover:text-red-500 hover:border-red-200 transition-all flex items-center justify-center gap-2"
+          >
+            <i className="fa-solid fa-trash-can"></i> Clear
+          </button>
+        </div>
+
         <div className="bg-indigo-600 dark:bg-indigo-700 rounded-lg p-3 text-white">
           <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">Knowledge Density</p>
-          <div className="h-1 bg-white/20 rounded-full mb-1">
+          <div className="h-1 bg-white/20 rounded-full">
             <div className="h-1 bg-white rounded-full transition-all" style={{ width: `${Math.min(documents.length * 10, 100)}%` }}></div>
           </div>
-          <p className="text-[10px] opacity-70 truncate">Persistence enabled</p>
         </div>
       </div>
     </div>

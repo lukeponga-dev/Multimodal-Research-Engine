@@ -15,8 +15,6 @@ interface ChatInterfaceProps {
   onToggleSidebar: () => void;
   isDarkMode: boolean;
   onToggleTheme: () => void;
-  onClearHistory: () => void;
-  onExportSession: () => void;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ 
@@ -29,9 +27,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onSendMessage,
   onToggleSidebar,
   isDarkMode,
-  onToggleTheme,
-  onClearHistory,
-  onExportSession
+  onToggleTheme
 }) => {
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
@@ -157,29 +153,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </div>
 
           <button 
-            onClick={onExportSession}
-            className="w-9 h-9 flex items-center justify-center text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
-            title="Export Research (.md)"
-          >
-            <i className="fa-solid fa-file-export text-sm"></i>
-          </button>
-
-          <button 
             onClick={onToggleTheme}
             className="w-9 h-9 flex items-center justify-center text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
           >
             <i className={`fa-solid ${isDarkMode ? 'fa-sun' : 'fa-moon'}`}></i>
           </button>
 
-          <button 
-            onClick={onClearHistory}
-            className="w-9 h-9 flex items-center justify-center text-slate-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-full transition-colors"
-            title="Clear History"
-          >
-            <i className="fa-solid fa-trash-can text-sm"></i>
-          </button>
-
-          <div className="hidden lg:flex items-center gap-2 bg-slate-100 dark:bg-zinc-800 rounded-full px-2 md:px-3 py-1 border border-slate-200 dark:border-zinc-700 shrink-0">
+          <div className="flex items-center gap-2 bg-slate-100 dark:bg-zinc-800 rounded-full px-2 md:px-3 py-1 border border-slate-200 dark:border-zinc-700 shrink-0">
             <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-tight ${useSearch ? 'text-green-600 dark:text-green-400' : 'text-slate-500 dark:text-zinc-500'}`}>
               Search
             </span>

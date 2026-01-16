@@ -189,6 +189,8 @@ const App: React.FC = () => {
         onRemoveDocument={handleRemoveDocument} 
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        onClearHistory={handleClearHistory}
+        onExportSession={handleExportSession}
       />
 
       {/* Main Chat Interface */}
@@ -204,8 +206,6 @@ const App: React.FC = () => {
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
           isDarkMode={isDarkMode}
           onToggleTheme={() => setIsDarkMode(!isDarkMode)}
-          onClearHistory={handleClearHistory}
-          onExportSession={handleExportSession}
         />
       </div>
     </div>
