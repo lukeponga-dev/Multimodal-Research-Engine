@@ -121,44 +121,52 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
         )}
       </div>
 
-      <div className="p-4 bg-slate-50 dark:bg-zinc-900 border-t border-slate-200 dark:border-zinc-800 space-y-3">
-        {/* Docs Trigger */}
-        <button 
-          onClick={onOpenDocs}
-          className="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl p-3 shadow-sm flex items-center justify-between group hover:border-indigo-300 dark:hover:border-indigo-700 transition-all"
-        >
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-slate-100 dark:bg-zinc-700 rounded-md flex items-center justify-center text-slate-500 dark:text-zinc-400 group-hover:text-indigo-500 transition-colors">
-              <i className="fa-solid fa-book-open text-[10px]"></i>
+      <div className="p-4 bg-slate-50 dark:bg-zinc-950 border-t border-slate-200 dark:border-zinc-800">
+        <div className="space-y-4">
+          {/* Memory Status */}
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-3 shadow-sm">
+            <div className="flex justify-between items-center mb-1.5">
+              <p className="text-[9px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Memory Usage</p>
+              <span className={`text-[9px] font-bold ${documents.length > 0 ? 'text-indigo-500' : 'text-slate-400'}`}>
+                {documents.length > 0 ? 'Active' : 'Idle'}
+              </span>
             </div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-zinc-400 group-hover:text-slate-800 dark:group-hover:text-zinc-200 transition-colors">System Docs</p>
+            <div className="h-1.5 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500" 
+                style={{ width: `${Math.min(documents.length * 10, 100)}%` }}
+              ></div>
+            </div>
           </div>
-          <i className="fa-solid fa-chevron-right text-[8px] text-slate-300 group-hover:text-indigo-400 transition-all"></i>
-        </button>
 
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-2">
-          <button 
-            onClick={onExportSession}
-            className="text-[10px] font-bold py-2.5 px-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-all flex items-center justify-center gap-2"
-          >
-            <i className="fa-solid fa-file-export"></i> Export
-          </button>
-          <button 
-            onClick={onClearHistory}
-            className="text-[10px] font-bold py-2.5 px-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-400 hover:text-red-500 hover:border-red-200 transition-all flex items-center justify-center gap-2"
-          >
-            <i className="fa-solid fa-trash-can"></i> Clear
-          </button>
-        </div>
+          {/* Action Area */}
+          <div>
+            <p className="text-[9px] font-bold text-slate-400 dark:text-zinc-600 uppercase tracking-widest mb-2 ml-1">Action Area</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button 
+                onClick={onOpenDocs}
+                className="flex flex-col items-center justify-center p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md hover:shadow-indigo-500/10 transition-all group"
+              >
+                <i className="fa-solid fa-book-open text-slate-400 group-hover:text-indigo-500 mb-1.5 text-sm transition-colors"></i>
+                <span className="text-[9px] font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">Docs</span>
+              </button>
+              
+              <button 
+                onClick={onExportSession}
+                className="flex flex-col items-center justify-center p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md hover:shadow-emerald-500/10 transition-all group"
+              >
+                <i className="fa-solid fa-file-export text-slate-400 group-hover:text-emerald-500 mb-1.5 text-sm transition-colors"></i>
+                <span className="text-[9px] font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">Export</span>
+              </button>
 
-        <div className="bg-indigo-600 dark:bg-indigo-700 rounded-xl p-3 text-white shadow-lg shadow-indigo-200 dark:shadow-none">
-          <div className="flex justify-between items-center mb-1.5">
-            <p className="text-[9px] font-bold uppercase tracking-widest opacity-80">Memory Payload</p>
-            <span className="text-[9px] font-bold">{Math.min(documents.length * 10, 100)}%</span>
-          </div>
-          <div className="h-1 bg-white/20 rounded-full overflow-hidden">
-            <div className="h-1 bg-white rounded-full transition-all duration-500" style={{ width: `${Math.min(documents.length * 10, 100)}%` }}></div>
+              <button 
+                onClick={onClearHistory}
+                className="col-span-2 flex items-center justify-center gap-2 p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-red-300 dark:hover:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all group"
+              >
+                <i className="fa-solid fa-trash-can text-slate-400 group-hover:text-red-500 transition-colors"></i>
+                <span className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 group-hover:text-red-600 dark:group-hover:text-red-400 uppercase tracking-wider">Clear Memory & Chat</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

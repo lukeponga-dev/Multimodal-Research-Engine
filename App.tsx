@@ -5,24 +5,17 @@ import ChatInterface from './components/ChatInterface';
 import DocsModal from './components/DocsModal';
 import { DocumentItem, ChatMessage, AppStatus, ModelType } from './types';
 import { performResearch } from './geminiService';
+import { db } from './db';
 
 const STORAGE_KEYS = {
-  DOCS: 'nexus_docs_v1',
-  MSGS: 'nexus_msgs_v1',
   THEME: 'nexus_theme_v1',
   MODEL: 'nexus_model_v1'
 };
 
 const App: React.FC = () => {
-  const [documents, setDocuments] = useState<DocumentItem[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.DOCS);
-    return saved ? JSON.parse(saved) : [];
-  });
-  
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.MSGS);
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [documents, setDocuments] = useState<DocumentItem[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   const [selectedModel, setSelectedModel] = useState<ModelType>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.MODEL);
@@ -39,15 +32,26 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDocsOpen, setIsDocsOpen] = useState(false);
 
-  // Persistence Effects
+  // Initialize Data from IndexedDB
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.DOCS, JSON.stringify(documents));
-  }, [documents]);
+    const initData = async () => {
+      try {
+        const [loadedDocs, loadedMsgs] = await Promise.all([
+          db.getAllDocuments(),
+          db.getAllMessages()
+        ]);
+        setDocuments(loadedDocs);
+        setMessages(loadedMsgs.sort((a, b) => a.timestamp - b.timestamp));
+      } catch (err) {
+        console.error("Failed to load persistent data:", err);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+    initData();
+  }, []);
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.MSGS, JSON.stringify(messages));
-  }, [messages]);
-
+  // Simple LocalStorage Persistence for Settings
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.MODEL, selectedModel);
   }, [selectedModel]);
@@ -61,16 +65,19 @@ const App: React.FC = () => {
     }
   }, [isDarkMode]);
 
-  const handleAddDocument = (doc: DocumentItem) => {
+  const handleAddDocument = async (doc: DocumentItem) => {
+    await db.addDocument(doc);
     setDocuments(prev => [...prev, doc]);
   };
 
-  const handleRemoveDocument = (id: string) => {
+  const handleRemoveDocument = async (id: string) => {
+    await db.removeDocument(id);
     setDocuments(prev => prev.filter(d => d.id !== id));
   };
 
-  const handleClearHistory = () => {
+  const handleClearHistory = async () => {
     if (confirm("Clear all chat history? Documents in memory will be kept.")) {
+      await db.clearMessages();
       setMessages([]);
     }
   };
@@ -139,13 +146,16 @@ const App: React.FC = () => {
       timestamp: Date.now()
     };
 
+    // Optimistic Update
     setMessages(prev => [...prev, userMsg]);
+    db.addMessage(userMsg).catch(console.error);
+
     setStatus(AppStatus.LOADING);
 
     try {
       const { text: responseText, sources } = await performResearch(
         text,
-        messages,
+        [...messages, userMsg], // Pass updated history manually since state update is async
         documents,
         selectedModel,
         useSearch
@@ -160,6 +170,7 @@ const App: React.FC = () => {
       };
 
       setMessages(prev => [...prev, aiMsg]);
+      db.addMessage(aiMsg).catch(console.error);
       setStatus(AppStatus.IDLE);
     } catch (error) {
       console.error("Research Error:", error);
@@ -170,9 +181,21 @@ const App: React.FC = () => {
         timestamp: Date.now()
       };
       setMessages(prev => [...prev, errorMsg]);
+      db.addMessage(errorMsg).catch(console.error);
       setStatus(AppStatus.ERROR);
     }
   }, [messages, documents, useSearch, selectedModel]);
+
+  if (isInitializing) {
+    return (
+       <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-zinc-950">
+          <div className="flex flex-col items-center gap-4">
+             <div className="w-12 h-12 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+             <p className="text-slate-400 dark:text-zinc-500 text-xs font-bold uppercase tracking-widest animate-pulse">Initializing Nexus Memory...</p>
+          </div>
+       </div>
+    );
+  }
 
   return (
     <div className={`flex h-screen w-full overflow-hidden transition-colors duration-300 ${isDarkMode ? 'dark bg-zinc-950' : 'bg-white'}`}>
