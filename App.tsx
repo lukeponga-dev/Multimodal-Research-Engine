@@ -1,11 +1,12 @@
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import KnowledgeBase from './components/KnowledgeBase';
 import ChatInterface from './components/ChatInterface';
 import DocsModal from './components/DocsModal';
-import { DocumentItem, ChatMessage, AppStatus, ModelType } from './types';
-import { performResearch } from './geminiService';
+import { DocumentItem, ChatMessage, AppStatus, ModelType, ChatAttachment } from './types';
+import { performResearch, generateSpeech } from './geminiService';
 import { db } from './db';
+import { decode, decodeAudioData } from './audioUtils';
 
 const STORAGE_KEYS = {
   THEME: 'nexus_theme_v1',
@@ -31,6 +32,8 @@ const App: React.FC = () => {
   const [useSearch, setUseSearch] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDocsOpen, setIsDocsOpen] = useState(false);
+  
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   // Initialize Data from IndexedDB
   useEffect(() => {
@@ -114,6 +117,11 @@ const App: React.FC = () => {
       messages.forEach(msg => {
         const role = msg.role === 'user' ? 'Researcher' : 'Nexus Intelligence';
         mdContent += `#### **${role}:**\n${msg.text}\n\n`;
+        if (msg.attachments) {
+            msg.attachments.forEach(att => {
+                mdContent += `*[Snapshot Attached]*\n`;
+            });
+        }
         if (msg.sources && msg.sources.length > 0) {
           mdContent += `**Sources:**\n`;
           msg.sources.forEach(src => {
@@ -138,11 +146,29 @@ const App: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const handleSendMessage = useCallback(async (text: string) => {
+  const speakResponse = async (text: string) => {
+    try {
+      const base64Audio = await generateSpeech(text);
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+      }
+      const ctx = audioContextRef.current;
+      const audioBuffer = await decodeAudioData(decode(base64Audio), ctx, 24000, 1);
+      const source = ctx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(ctx.destination);
+      source.start();
+    } catch (e) {
+      console.error("Auto-speak failed", e);
+    }
+  };
+
+  const handleSendMessage = useCallback(async (text: string, attachments: ChatAttachment[] = [], autoSpeak: boolean = false) => {
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
       text,
+      attachments,
       timestamp: Date.now()
     };
 
@@ -158,6 +184,7 @@ const App: React.FC = () => {
         [...messages, userMsg], // Pass updated history manually since state update is async
         documents,
         selectedModel,
+        attachments, // Pass immediate visual context
         useSearch
       );
 
@@ -172,6 +199,11 @@ const App: React.FC = () => {
       setMessages(prev => [...prev, aiMsg]);
       db.addMessage(aiMsg).catch(console.error);
       setStatus(AppStatus.IDLE);
+
+      if (autoSpeak) {
+        speakResponse(responseText);
+      }
+
     } catch (error) {
       console.error("Research Error:", error);
       const errorMsg: ChatMessage = {

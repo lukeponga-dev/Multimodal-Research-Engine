@@ -13,11 +13,18 @@ export interface GroundingSource {
   uri: string;
 }
 
+export interface ChatAttachment {
+  type: 'image';
+  mimeType: string;
+  data: string; // Base64
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'model';
   text: string;
   sources?: GroundingSource[];
+  attachments?: ChatAttachment[];
   timestamp: number;
 }
 
