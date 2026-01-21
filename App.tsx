@@ -116,6 +116,33 @@ Improvements in accuracy must not introduce latency regressions beyond the speci
         content: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAADIAQMAAAAwS4omAAAAA1BMVEX///+nxBvIAAAANElEQVRIie3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeALWLAABq15NlAAAAABJRU5ErkJggg=='
       },
       {
+        id: 'demo-protocol-ocr',
+        name: 'protocol_page_1_ocr.txt',
+        type: 'text',
+        timestamp: Date.now(),
+        content: `Protocol: Adaptive Model Evaluation Under Latency Constraints
+Abstract
+This protocol evaluates model performance across repeated experimental runs under 
+fixed compute and latency constraints. Primary objectives include accuracy improvement, 
+latency stability, and variance reduction across batches.
+Constraints
+- Batch size fixed at 32
+- Maximum allowable p95 latency: 120 ms
+- Dataset held constant across runs
+- No architectural changes between runs; only parameter tuning permitted
+Metrics Tracked
+- Accuracy (%)
+- Precision
+- Recall
+- p95 Latency (ms)
+- Error variance across batches
+Evaluation Notes
+Improvements in accuracy must not introduce latency regressions beyond the specified 
+threshold. Variance spikes should be treated as instability indicators even if mean 
+accuracy improves. Any recommendation must be justified using both quantitative and 
+visual evidence.`
+      },
+      {
         id: 'demo-run1',
         name: 'experimental_run_1.csv',
         type: 'text',
