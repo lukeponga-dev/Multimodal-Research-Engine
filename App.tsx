@@ -1,19 +1,19 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import KnowledgeBase from './components/KnowledgeBase';
-import ChatInterface from './components/ChatInterface';
-import DocsModal from './components/DocsModal';
-import { DocumentItem, ChatMessage, AppStatus, ModelType, ChatAttachment } from './types';
-import { performResearch, generateSpeech } from './geminiService';
-import { db } from './db';
-import { decode, decodeAudioData } from './audioUtils';
+import KnowledgeBase from './components/KnowledgeBase.tsx';
+import ChatInterface from './components/ChatInterface.tsx';
+import DocsModal from './components/DocsModal.tsx';
+import { DocumentItem, ChatMessage, AppStatus, ModelType, ChatAttachment } from './types.ts';
+import { performResearch, generateSpeech } from './geminiService.ts';
+import { db } from './db.ts';
+import { decode, decodeAudioData } from './audioUtils.ts';
 
 const STORAGE_KEYS = {
   THEME: 'nexus_theme_v1',
   MODEL: 'nexus_model_v1'
 };
 
-const App: React.FC = () => {
+export default function App() {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -54,12 +54,10 @@ const App: React.FC = () => {
     }
   };
 
-  // Initialize Data from IndexedDB
   useEffect(() => {
     initData();
   }, []);
 
-  // Simple LocalStorage Persistence for Settings
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.MODEL, selectedModel);
   }, [selectedModel]);
@@ -189,7 +187,6 @@ const App: React.FC = () => {
       timestamp: Date.now()
     };
 
-    // Optimistic Update
     setMessages(prev => [...prev, userMsg]);
     db.addMessage(userMsg).catch(console.error);
 
@@ -198,10 +195,10 @@ const App: React.FC = () => {
     try {
       const { text: responseText, sources } = await performResearch(
         text,
-        [...messages, userMsg], // Pass updated history manually since state update is async
+        [...messages, userMsg],
         documents,
         selectedModel,
-        attachments, // Pass immediate visual context
+        attachments,
         useSearch
       );
 
@@ -289,18 +286,13 @@ const App: React.FC = () => {
 
   return (
     <div className={`flex h-screen w-full overflow-hidden transition-colors duration-300 ${isDarkMode ? 'dark bg-zinc-950' : 'bg-white'}`}>
-      {/* Modals */}
       <DocsModal isOpen={isDocsOpen} onClose={() => setIsDocsOpen(false)} />
-
-      {/* Mobile Backdrop */}
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 bg-slate-900/60 z-40 md:hidden backdrop-blur-md transition-opacity"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
-
-      {/* Knowledge Base Sidebar */}
       <KnowledgeBase 
         documents={documents} 
         onAddDocument={handleAddDocument} 
@@ -312,8 +304,6 @@ const App: React.FC = () => {
         onExportSession={handleExportSession}
         onOpenDocs={() => setIsDocsOpen(true)}
       />
-
-      {/* Main Chat Interface */}
       <div className="flex-1 flex flex-col min-w-0 h-full">
         <ChatInterface 
           messages={messages} 
@@ -330,6 +320,4 @@ const App: React.FC = () => {
       </div>
     </div>
   );
-};
-
-export default App;
+}
