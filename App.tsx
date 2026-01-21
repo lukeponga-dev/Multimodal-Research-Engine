@@ -107,6 +107,15 @@ Evaluation Notes
 Improvements in accuracy must not introduce latency regressions beyond the specified threshold. Variance spikes should be treated as instability indicators even if mean accuracy improves. Any recommendation must be justified using both quantitative and visual evidence.`
       },
       {
+        id: 'demo-protocol-visual',
+        name: 'protocol_page_1.png',
+        type: 'image',
+        mimeType: 'image/png',
+        timestamp: Date.now(),
+        // Placeholder for the screenshot provided (Gray document representation)
+        content: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAADIAQMAAAAwS4omAAAAA1BMVEX///+nxBvIAAAANElEQVRIie3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeALWLAABq15NlAAAAABJRU5ErkJggg=='
+      },
+      {
         id: 'demo-run1',
         name: 'experimental_run_1.csv',
         type: 'text',
