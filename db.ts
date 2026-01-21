@@ -74,6 +74,17 @@ export const db = {
     });
   },
 
+  async clearDocuments(): Promise<void> {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(DOCS_STORE, 'readwrite');
+      const store = transaction.objectStore(DOCS_STORE);
+      const request = store.clear();
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  },
+
   async getAllMessages(): Promise<ChatMessage[]> {
     try {
       const db = await openDB();

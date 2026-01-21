@@ -1,11 +1,12 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { DocumentItem } from '../types';
 
 interface KnowledgeBaseProps {
   documents: DocumentItem[];
   onAddDocument: (doc: DocumentItem) => void;
   onRemoveDocument: (id: string) => void;
+  onCompareDocuments: (docs: DocumentItem[]) => void;
   isOpen?: boolean;
   onClose?: () => void;
   onClearHistory: () => void;
@@ -17,6 +18,7 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
   documents, 
   onAddDocument, 
   onRemoveDocument,
+  onCompareDocuments,
   isOpen = false,
   onClose,
   onClearHistory,
@@ -24,6 +26,7 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
   onOpenDocs
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,6 +57,20 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const toggleSelect = (id: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedIds(next);
+  };
+
+  const handleCompare = () => {
+    const selectedDocs = documents.filter(d => selectedIds.has(d.id));
+    onCompareDocuments(selectedDocs);
+    setSelectedIds(new Set()); // Clear selection after action
+    if (window.innerWidth < 768 && onClose) onClose();
+  };
+
   return (
     <div className={`
       fixed md:relative inset-y-0 left-0 z-50 w-80 bg-white dark:bg-zinc-950 border-r border-slate-200 dark:border-zinc-800 
@@ -63,7 +80,7 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
       <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-slate-50/50 dark:bg-zinc-900/50">
         <div className="flex items-center gap-2">
            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white text-sm shadow-sm">
-             <i className="fa-solid fa-nexus"></i>
+             <i className="fa-solid fa-brain"></i>
            </div>
            <h2 className="font-bold text-slate-800 dark:text-zinc-100 text-sm tracking-tight">
              Context Memory
@@ -93,18 +110,40 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
           />
         </div>
 
+        {selectedIds.size > 1 && (
+          <button 
+            onClick={handleCompare}
+            className="w-full py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-indigo-500/20 animate-in slide-in-from-top-2 flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all"
+          >
+            <i className="fa-solid fa-layer-group"></i>
+            Compare {selectedIds.size} Selected
+          </button>
+        )}
+
         {documents.map((doc) => (
-          <div key={doc.id} className="group p-3 bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm hover:shadow-md transition-all relative overflow-hidden">
+          <div 
+            key={doc.id} 
+            className={`group p-3 bg-white dark:bg-zinc-900/50 border rounded-xl shadow-sm hover:shadow-md transition-all relative overflow-hidden cursor-pointer ${selectedIds.has(doc.id) ? 'border-indigo-500 ring-1 ring-indigo-500/20' : 'border-slate-200 dark:border-zinc-800'}`}
+            onClick={() => toggleSelect(doc.id)}
+          >
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 max-w-[85%]">
-                <i className={`fa-solid ${
-                  doc.type === 'image' ? 'fa-image text-emerald-500' : 
-                  doc.type === 'json' ? 'fa-file-code text-orange-400' : 'fa-file-lines text-blue-400'
-                } text-xs`}></i>
-                <p className="text-xs font-semibold text-slate-700 dark:text-zinc-300 truncate">{doc.name}</p>
+              <div className="flex items-center gap-3 max-w-[85%]">
+                <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedIds.has(doc.id) ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-zinc-800 text-slate-400'}`}>
+                  {selectedIds.has(doc.id) ? <i className="fa-solid fa-check text-[10px]"></i> : <div className="w-2 h-2 rounded-full border border-slate-300 dark:border-zinc-600"></div>}
+                </div>
+                <div className="flex items-center gap-2 truncate">
+                  <i className={`fa-solid ${
+                    doc.type === 'image' ? 'fa-image text-emerald-500' : 
+                    doc.type === 'json' ? 'fa-file-code text-orange-400' : 'fa-file-lines text-blue-400'
+                  } text-[10px]`}></i>
+                  <p className="text-[11px] font-semibold text-slate-700 dark:text-zinc-300 truncate">{doc.name}</p>
+                </div>
               </div>
               <button 
-                onClick={() => onRemoveDocument(doc.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemoveDocument(doc.id);
+                }}
                 className="opacity-100 md:opacity-0 group-hover:opacity-100 p-1 text-slate-400 dark:text-zinc-600 hover:text-red-500 transition-opacity"
               >
                 <i className="fa-solid fa-trash-can text-[10px]"></i>
@@ -123,7 +162,6 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
 
       <div className="p-4 bg-slate-50 dark:bg-zinc-950 border-t border-slate-200 dark:border-zinc-800">
         <div className="space-y-4">
-          {/* Memory Status */}
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-3 shadow-sm">
             <div className="flex justify-between items-center mb-1.5">
               <p className="text-[9px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Memory Usage</p>
@@ -139,7 +177,6 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
             </div>
           </div>
 
-          {/* Action Area */}
           <div>
             <p className="text-[9px] font-bold text-slate-400 dark:text-zinc-600 uppercase tracking-widest mb-2 ml-1">Action Area</p>
             <div className="grid grid-cols-2 gap-2">

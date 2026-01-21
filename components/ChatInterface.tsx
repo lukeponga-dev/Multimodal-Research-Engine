@@ -309,9 +309,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 <i className={`fa-solid ${isPro ? 'fa-microchip' : 'fa-bolt-lightning'} text-lg`}></i>
               </div>
               <div className="overflow-hidden">
-                <h1 className="font-bold text-slate-800 dark:text-zinc-100 text-sm md:text-lg leading-tight truncate">
-                  Nexus {isPro ? 'Pro' : 'Flash'}
-                </h1>
+                <div className="flex items-baseline gap-2">
+                    <h1 className="font-bold text-slate-800 dark:text-zinc-100 text-sm md:text-lg leading-tight truncate">
+                    Nexus {isPro ? 'Pro' : 'Flash'}
+                    </h1>
+                    <span className="hidden lg:inline text-[9px] text-slate-400 font-bold uppercase tracking-widest border-l border-slate-200 dark:border-zinc-700 pl-2">
+                        Infinite Context
+                    </span>
+                </div>
                 <p className="text-[8px] md:text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider truncate">
                   {isPro ? 'Deep Thinking Intelligence' : 'High Speed Synthesis'}
                 </p>
@@ -371,7 +376,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             <div className={`w-16 h-16 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl flex items-center justify-center mb-6 transition-all ${isPro ? 'shadow-indigo-500/10' : 'shadow-emerald-500/10'}`}>
                 <i className={`fa-solid ${isPro ? 'fa-atom' : 'fa-bolt'} ${isPro ? 'text-indigo-500' : 'text-emerald-500'} text-3xl animate-pulse`}></i>
             </div>
-            <h3 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-zinc-100 mb-2">Nexus Sensory Engine</h3>
+            <h3 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-zinc-100 mb-1">Nexus Sensory Engine</h3>
+            <p className="text-[10px] md:text-xs text-indigo-500 dark:text-indigo-400 font-bold uppercase tracking-[0.2em] mb-4">
+              Synthesis Without Limits.
+            </p>
             <p className="text-slate-500 dark:text-zinc-400 text-sm leading-relaxed mb-8">
               Enable "Vision" to scan your environment, or speak to interact with the multimodal reasoning core.
             </p>
@@ -530,17 +538,35 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
         {status === AppStatus.LOADING && (
           <div className="flex justify-start w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
-             <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl rounded-bl-none p-4 shadow-lg shadow-indigo-500/5 dark:shadow-none flex items-center gap-5 max-w-sm">
+             <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl rounded-bl-none p-5 shadow-2xl shadow-indigo-500/10 dark:shadow-none flex items-center gap-6 max-w-sm">
                 
                 {/* Loader Icon */}
                 <div className="shrink-0">
                   {isPro ? (
-                    // Pro: Deep Thinking Orb
-                    <div className="relative w-10 h-10 flex items-center justify-center">
-                      <div className="absolute inset-0 border-2 border-indigo-100 dark:border-indigo-900/30 rounded-full"></div>
-                      <div className="absolute inset-0 border-2 border-t-indigo-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-[spin_2s_linear_infinite]"></div>
-                      <div className="absolute inset-1.5 border-2 border-t-transparent border-r-purple-500 border-b-transparent border-l-transparent rounded-full animate-[spin_1.5s_linear_infinite_reverse]"></div>
-                      <div className="w-2.5 h-2.5 bg-indigo-600 rounded-full animate-pulse shadow-[0_0_12px_rgba(79,70,229,0.8)]"></div>
+                    // Pro: Sophisticated Deep Thinking Neural Core
+                    <div className="relative w-14 h-14 flex items-center justify-center">
+                      {/* Inner pulsing core */}
+                      <div className="absolute w-4 h-4 bg-indigo-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(99,102,241,0.8)] z-10"></div>
+                      
+                      {/* Rotating Orbital Ring 1 - Outer slow */}
+                      <div className="absolute inset-0 border-[1.5px] border-indigo-200/30 dark:border-indigo-800/20 rounded-full"></div>
+                      <div className="absolute inset-0 border-[1.5px] border-t-indigo-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-[spin_3s_linear_infinite]"></div>
+                      
+                      {/* Rotating Orbital Ring 2 - Mid reverse */}
+                      <div className="absolute inset-2 border-[1px] border-purple-200/20 dark:border-purple-800/10 rounded-full"></div>
+                      <div className="absolute inset-2 border-[1.5px] border-t-transparent border-r-purple-500 border-b-transparent border-l-transparent rounded-full animate-[spin_2s_linear_infinite_reverse]"></div>
+                      
+                      {/* Rotating Orbital Ring 3 - Inner fast */}
+                      <div className="absolute inset-4 border-[0.5px] border-indigo-100/20 dark:border-indigo-700/10 rounded-full"></div>
+                      <div className="absolute inset-4 border-[1.5px] border-t-transparent border-r-transparent border-b-indigo-400 border-l-transparent rounded-full animate-[spin_1s_linear_infinite]"></div>
+
+                      {/* Spark nodes orbiting */}
+                      <div className="absolute inset-0 animate-[spin_4s_linear_infinite]">
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_white]"></div>
+                      </div>
+                      <div className="absolute inset-2 animate-[spin_2.5s_linear_infinite_reverse]">
+                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-purple-300 rounded-full shadow-[0_0_6px_rgba(216,180,254,0.8)]"></div>
+                      </div>
                     </div>
                   ) : (
                     // Flash: High Speed Wave
@@ -554,15 +580,29 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   )}
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <span className="text-sm text-slate-700 dark:text-zinc-200 font-semibold tracking-tight">
-                    Nexus {isPro ? 'Pro' : 'Flash'} is {isPro ? 'reasoning' : 'processing'}...
-                  </span>
+                <div className="flex flex-col gap-1.5">
                   <div className="flex items-center gap-2">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isPro ? 'text-indigo-500' : 'text-emerald-500'}`}>
-                       {isPro ? 'Constructing Logic Paths' : 'Synthesizing Data'}
+                    <span className="text-sm text-slate-800 dark:text-zinc-100 font-bold tracking-tight">
+                      Nexus {isPro ? 'Pro' : 'Flash'}
                     </span>
-                     {isPro && <span className="text-[10px] text-slate-400 dark:text-zinc-600 font-mono">32k budget</span>}
+                    <div className="flex gap-1">
+                      <span className="w-1 h-1 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                      <span className="w-1 h-1 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                      <span className="w-1 h-1 bg-indigo-500 rounded-full animate-bounce"></span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className={`text-[10px] font-bold uppercase tracking-widest ${isPro ? 'text-indigo-600 dark:text-indigo-400 animate-pulse' : 'text-emerald-500'}`}>
+                       {isPro ? 'Conducting Multi-Step Reasoning' : 'Synthesizing Data'}
+                    </span>
+                    {isPro && (
+                      <div className="flex items-center gap-2">
+                        <div className="h-1 flex-1 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                           <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 w-1/3 animate-[shimmer_2s_infinite]"></div>
+                        </div>
+                        <span className="text-[8px] text-slate-400 dark:text-zinc-600 font-mono uppercase tracking-tighter shrink-0">32k budget</span>
+                      </div>
+                    )}
                   </div>
                 </div>
              </div>

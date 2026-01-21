@@ -17,6 +17,7 @@ const App: React.FC = () => {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [initError, setInitError] = useState<string | null>(null);
 
   const [selectedModel, setSelectedModel] = useState<ModelType>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.MODEL);
@@ -35,22 +36,26 @@ const App: React.FC = () => {
   
   const audioContextRef = useRef<AudioContext | null>(null);
 
+  const initData = async () => {
+    setInitError(null);
+    setIsInitializing(true);
+    try {
+      const [loadedDocs, loadedMsgs] = await Promise.all([
+        db.getAllDocuments(),
+        db.getAllMessages()
+      ]);
+      setDocuments(loadedDocs);
+      setMessages(loadedMsgs.sort((a, b) => a.timestamp - b.timestamp));
+    } catch (err) {
+      console.error("Failed to load persistent data:", err);
+      setInitError("Nexus could not access its local memory bank. This usually happens due to restricted browser permissions or a full storage profile.");
+    } finally {
+      setIsInitializing(false);
+    }
+  };
+
   // Initialize Data from IndexedDB
   useEffect(() => {
-    const initData = async () => {
-      try {
-        const [loadedDocs, loadedMsgs] = await Promise.all([
-          db.getAllDocuments(),
-          db.getAllMessages()
-        ]);
-        setDocuments(loadedDocs);
-        setMessages(loadedMsgs.sort((a, b) => a.timestamp - b.timestamp));
-      } catch (err) {
-        console.error("Failed to load persistent data:", err);
-      } finally {
-        setIsInitializing(false);
-      }
-    };
     initData();
   }, []);
 
@@ -82,6 +87,18 @@ const App: React.FC = () => {
     if (confirm("Clear all chat history? Documents in memory will be kept.")) {
       await db.clearMessages();
       setMessages([]);
+    }
+  };
+
+  const handleResetStorage = async () => {
+    if (confirm("This will PERMANENTLY delete all memory documents and chat history. Are you sure?")) {
+      try {
+        await Promise.all([db.clearMessages(), db.clearDocuments()]);
+        localStorage.clear();
+        window.location.reload();
+      } catch (e) {
+        alert("Failed to clear some data. Please clear your browser storage manually.");
+      }
     }
   };
 
@@ -218,6 +235,17 @@ const App: React.FC = () => {
     }
   }, [messages, documents, useSearch, selectedModel]);
 
+  const handleCompareDocuments = useCallback(async (selectedDocs: DocumentItem[]) => {
+    if (selectedDocs.length < 2) return;
+    
+    const docNames = selectedDocs.map(d => d.name).join(', ');
+    const comparePrompt = `Synthesize a comprehensive "Compare and Contrast" report for the following items in my context memory: ${docNames}. 
+    Please highlight key thematic differences, specific technical variances, and shared similarities. 
+    Structure the report with clear headings and a concluding summary of insights.`;
+    
+    handleSendMessage(comparePrompt);
+  }, [handleSendMessage]);
+
   if (isInitializing) {
     return (
        <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-zinc-950">
@@ -226,6 +254,36 @@ const App: React.FC = () => {
              <p className="text-slate-400 dark:text-zinc-500 text-xs font-bold uppercase tracking-widest animate-pulse">Initializing Nexus Memory...</p>
           </div>
        </div>
+    );
+  }
+
+  if (initError) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-zinc-950 p-6">
+        <div className="max-w-md w-full bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-2xl border border-slate-200 dark:border-zinc-800 text-center animate-in fade-in zoom-in duration-300">
+           <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <i className="fa-solid fa-triangle-exclamation text-red-500 text-3xl"></i>
+           </div>
+           <h2 className="text-xl font-bold text-slate-800 dark:text-zinc-100 mb-4">Initialization Failure</h2>
+           <p className="text-sm text-slate-500 dark:text-zinc-400 leading-relaxed mb-8">
+             {initError}
+           </p>
+           <div className="flex flex-col gap-3">
+              <button 
+                onClick={initData}
+                className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+              >
+                <i className="fa-solid fa-rotate"></i> Try Again
+              </button>
+              <button 
+                onClick={handleResetStorage}
+                className="w-full py-4 bg-white dark:bg-zinc-800 text-red-600 dark:text-red-400 border border-slate-200 dark:border-zinc-700 rounded-xl font-bold text-sm hover:bg-red-50 dark:hover:bg-red-900/10 transition-all"
+              >
+                Reset System Data
+              </button>
+           </div>
+        </div>
+      </div>
     );
   }
 
@@ -247,6 +305,7 @@ const App: React.FC = () => {
         documents={documents} 
         onAddDocument={handleAddDocument} 
         onRemoveDocument={handleRemoveDocument} 
+        onCompareDocuments={handleCompareDocuments}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         onClearHistory={handleClearHistory}
