@@ -42,6 +42,11 @@ export default function ChatInterface({
   const [showChatSearch, setShowChatSearch] = useState(false);
   const [chatSearchTerm, setChatSearchTerm] = useState('');
   
+  // Auto-speak state with persistence
+  const [autoSpeak, setAutoSpeak] = useState(() => {
+    return localStorage.getItem('nexus_autospeak_v1') === 'true';
+  });
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -61,6 +66,10 @@ export default function ChatInterface({
       videoRef.current.srcObject = streamRef.current;
     }
   }, [isCameraOpen]);
+
+  useEffect(() => {
+    localStorage.setItem('nexus_autospeak_v1', autoSpeak.toString());
+  }, [autoSpeak]);
 
   const displayedMessages = useMemo(() => {
     if (!chatSearchTerm.trim()) return messages;
@@ -109,7 +118,8 @@ export default function ChatInterface({
     e?.preventDefault();
     if ((!input.trim() && !pendingSnapshot) || status === AppStatus.LOADING || isTranscribing) return;
     const attachments = pendingSnapshot ? [pendingSnapshot] : [];
-    onSendMessage(input, attachments, false);
+    // Pass autoSpeak preference
+    onSendMessage(input, attachments, autoSpeak);
     setInput('');
     setPendingSnapshot(null);
     setIsCameraOpen(false);
@@ -184,6 +194,7 @@ export default function ChatInterface({
           try {
             const transcription = await transcribeAudio(base64Audio, 'audio/webm');
             if (transcription) {
+              // Voice input defaults to speaking response (conversational mode)
               onSendMessage(transcription, pendingSnapshot ? [pendingSnapshot] : [], true);
               setInput('');
               setPendingSnapshot(null);
@@ -273,6 +284,15 @@ export default function ChatInterface({
             </select>
             <i className="fa-solid fa-chevron-down absolute right-3 text-[8px] text-slate-400 pointer-events-none"></i>
           </div>
+          
+          <button
+            onClick={() => setAutoSpeak(!autoSpeak)}
+            className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${autoSpeak ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800'}`}
+            title={autoSpeak ? "Auto-speak: ON" : "Auto-speak: OFF"}
+          >
+            <i className={`fa-solid ${autoSpeak ? 'fa-volume-high' : 'fa-volume-xmark'}`}></i>
+          </button>
+
           <button onClick={onToggleTheme} className="w-9 h-9 flex items-center justify-center text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors"><i className={`fa-solid ${isDarkMode ? 'fa-sun' : 'fa-moon'}`}></i></button>
           <div className="flex items-center gap-2 bg-slate-100 dark:bg-zinc-800 rounded-full px-2 md:px-3 py-1 border border-slate-200 dark:border-zinc-700 shrink-0">
             <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-tight ${useSearch ? 'text-green-600 dark:text-green-400' : 'text-slate-500 dark:text-zinc-500'}`}>Search</span>
@@ -336,7 +356,7 @@ export default function ChatInterface({
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2"><i className={`fa-solid ${msg.role === 'user' ? 'fa-user-circle' : isPro ? 'fa-brain' : 'fa-bolt-lightning'} text-[10px] opacity-60`}></i><span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest opacity-60">{msg.role === 'user' ? 'Researcher' : `${isPro ? 'Pro' : 'Flash'} Intelligence`}</span></div>
                 {msg.role === 'model' && (
-                  <button onClick={() => handleSpeech(msg.text, msg.id)} className={`text-xs p-1 rounded-full transition-colors ${isSpeaking === msg.id ? 'text-indigo-500 animate-pulse' : 'text-slate-400 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-zinc-800'}`}><i className={`fa-solid ${isSpeaking === msg.id ? 'fa-volume-high' : 'fa-volume-low'}`}></i></button>
+                  <button onClick={() => handleSpeech(msg.text, msg.id)} title="Read Aloud" className={`text-xs p-1 rounded-full transition-colors ${isSpeaking === msg.id ? 'text-indigo-500 animate-pulse' : 'text-slate-400 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-zinc-800'}`}><i className={`fa-solid ${isSpeaking === msg.id ? 'fa-volume-high' : 'fa-volume-low'}`}></i></button>
                 )}
               </div>
               <div className="text-sm md:text-base leading-relaxed whitespace-pre-wrap font-medium">{renderMessageText(msg.text)}</div>
