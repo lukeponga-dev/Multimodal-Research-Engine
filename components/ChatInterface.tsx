@@ -349,11 +349,56 @@ export default function ChatInterface({
 
         {(status === AppStatus.LOADING || isTranscribing) && (
           <div className="flex justify-start w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
-             <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl rounded-bl-none p-5 shadow-2xl shadow-indigo-500/10 dark:shadow-none flex items-center gap-6 max-w-sm">
-                <div className="shrink-0">{isPro && !isTranscribing ? (
-                    <div className="relative w-14 h-14 flex items-center justify-center"><div className="absolute w-4 h-4 bg-indigo-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(99,102,241,0.8)] z-10"></div><div className="absolute inset-0 border-[1.5px] border-indigo-200/30 dark:border-indigo-800/20 rounded-full"></div><div className="absolute inset-0 border-[1.5px] border-t-indigo-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-[spin_3s_linear_infinite]"></div><div className="absolute inset-2 border-[1px] border-purple-200/20 dark:border-purple-800/10 rounded-full"></div><div className="absolute inset-2 border-[1.5px] border-t-transparent border-r-purple-500 border-b-transparent border-l-transparent rounded-full animate-[spin_2s_linear_infinite_reverse]"></div><div className="absolute inset-4 border-[0.5px] border-indigo-100/20 dark:border-indigo-700/10 rounded-full"></div><div className="absolute inset-4 border-[1.5px] border-t-transparent border-r-transparent border-b-indigo-400 border-l-transparent rounded-full animate-[spin_1s_linear_infinite]"></div></div>
-                  ) : (<div className="flex items-center gap-0.5 h-8"><div className="w-1 h-3 bg-emerald-400/50 rounded-full animate-[pulse_0.6s_ease-in-out_infinite]"></div><div className="w-1 h-5 bg-emerald-500 rounded-full animate-[pulse_0.6s_ease-in-out_0.15s_infinite]"></div><div className="w-1 h-8 bg-emerald-400 rounded-full animate-[pulse_0.6s_ease-in-out_0.3s_infinite]"></div></div>)}</div>
-                <div className="flex flex-col gap-1.5"><div className="flex items-center gap-2"><span className="text-sm text-slate-800 dark:text-zinc-100 font-bold tracking-tight">{isTranscribing ? 'Nexus Audio Engine' : `Nexus ${isPro ? 'Pro' : 'Flash'}`}</span></div><div className="flex flex-col gap-0.5"><span className={`text-[10px] font-bold uppercase tracking-widest ${isTranscribing ? 'text-amber-500 animate-pulse' : (isPro ? 'text-indigo-600 dark:text-indigo-400 animate-pulse' : 'text-emerald-500')}`}>{isTranscribing ? 'Processing Audio Stream' : (isPro ? 'Conducting Multi-Step Reasoning' : 'Synthesizing Data')}</span></div></div>
+             <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl rounded-bl-none p-5 shadow-2xl shadow-indigo-500/10 dark:shadow-none flex items-center gap-5 max-w-sm">
+                
+                <div className="shrink-0 relative w-14 h-14 flex items-center justify-center">
+                  
+                  {isTranscribing ? (
+                    <>
+                      <div className="absolute inset-0 bg-amber-500/10 rounded-full animate-pulse"></div>
+                      <div className="flex gap-1 items-center h-6">
+                        <div className="w-1.5 bg-amber-500 rounded-full h-3 animate-[pulse_0.5s_ease-in-out_infinite]"></div>
+                        <div className="w-1.5 bg-amber-500 rounded-full h-6 animate-[pulse_0.5s_ease-in-out_0.1s_infinite]"></div>
+                        <div className="w-1.5 bg-amber-500 rounded-full h-4 animate-[pulse_0.5s_ease-in-out_0.2s_infinite]"></div>
+                        <div className="w-1.5 bg-amber-500 rounded-full h-5 animate-[pulse_0.5s_ease-in-out_0.3s_infinite]"></div>
+                        <div className="w-1.5 bg-amber-500 rounded-full h-2 animate-[pulse_0.5s_ease-in-out_0.4s_infinite]"></div>
+                      </div>
+                    </>
+                  ) : isPro ? (
+                    <>
+                       <div className="absolute inset-0 bg-indigo-500/5 rounded-full blur-lg"></div>
+                       <div className="relative z-10 w-2 h-2 bg-indigo-600 dark:bg-indigo-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
+                       <div className="absolute w-8 h-8 border border-indigo-200 dark:border-indigo-800 rounded-lg rotate-45 animate-[spin_6s_linear_infinite]"></div>
+                       <div className="absolute w-12 h-12 rounded-full border-[1.5px] border-transparent border-t-purple-500/60 border-b-purple-500/60 animate-[spin_4s_linear_infinite_reverse]"></div>
+                       <div className="absolute w-full h-full rounded-full border border-indigo-500/10 dark:border-indigo-400/10"></div>
+                       <div className="absolute w-full h-full rounded-full border-l-2 border-indigo-500 animate-[spin_2s_ease-in-out_infinite]"></div>
+                       <div className="absolute w-10 h-10 animate-[spin_5s_linear_infinite]">
+                          <div className="w-1.5 h-1.5 bg-purple-500 rounded-full absolute -top-0.5 left-1/2 -translate-x-1/2 shadow-sm"></div>
+                       </div>
+                    </>
+                  ) : (
+                    <>
+                       <div className="absolute inset-0 rounded-full border-2 border-emerald-500/20 animate-ping"></div>
+                       <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-emerald-500 border-l-emerald-500 animate-[spin_0.4s_linear_infinite]"></div>
+                       <div className="absolute inset-2 rounded-full border-2 border-transparent border-r-emerald-400 animate-[spin_0.6s_linear_infinite_reverse]"></div>
+                       <div className="absolute inset-0 flex items-center justify-center">
+                           <i className="fa-solid fa-bolt text-emerald-500 text-lg animate-[pulse_0.2s_ease-in-out_infinite]"></i>
+                       </div>
+                    </>
+                  )}
+
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-slate-800 dark:text-zinc-100 font-bold tracking-tight">
+                      {isTranscribing ? 'Nexus Audio Engine' : `Nexus ${isPro ? 'Pro' : 'Flash'}`}
+                    </span>
+                  </div>
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${isTranscribing ? 'text-amber-500 animate-pulse' : (isPro ? 'text-indigo-600 dark:text-indigo-400 animate-pulse' : 'text-emerald-500')}`}>
+                      {isTranscribing ? 'Transcribing Input...' : (isPro ? 'Deep Reasoning Active...' : 'Rapid Synthesis...')}
+                  </span>
+                </div>
              </div>
           </div>
         )}

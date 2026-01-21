@@ -12,14 +12,6 @@ export const performResearch = async (
 ): Promise<{ text: string; sources: GroundingSource[] }> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
-  // Separate text context from image data (Long term memory)
-  const textDocs = memory.filter(doc => doc.type !== 'image');
-  const memoryImages = memory.filter(doc => doc.type === 'image');
-
-  const contextHeader = textDocs.length > 0 
-    ? `KNOWLEDGE BASE CONTEXT:\n${textDocs.map(doc => `--- DOCUMENT: ${doc.name} ---\n${doc.content}\n`).join('\n')}\n\n`
-    : "";
-
   const isPro = model === 'gemini-3-pro-preview';
   const modelNameLabel = isPro ? 'Pro' : 'Flash';
 
@@ -64,13 +56,17 @@ export const performResearch = async (
 
   // Build current prompt parts (multimodal)
   const currentParts: any[] = [];
-  const fullPrompt = contextHeader + prompt;
 
-  if (fullPrompt && fullPrompt.trim()) {
-    currentParts.push({ text: fullPrompt });
-  }
+  // 1. Add Memory Documents (Text/JSON/Markdown)
+  const textDocs = memory.filter(doc => doc.type !== 'image');
+  textDocs.forEach(doc => {
+      currentParts.push({
+          text: `[KNOWLEDGE BASE DOCUMENT: ${doc.name} (${doc.type})]\n${doc.content}`
+      });
+  });
   
-  // 1. Add Memory Images (Long term)
+  // 2. Add Memory Images (Long term)
+  const memoryImages = memory.filter(doc => doc.type === 'image');
   memoryImages.forEach(img => {
     if (img.content.includes(',')) {
       const base64Data = img.content.split(',')[1];
@@ -85,7 +81,12 @@ export const performResearch = async (
     }
   });
 
-  // 2. Add Immediate Attachments (Snapshots/Live Vision)
+  // 3. Add User Prompt
+  if (prompt && prompt.trim()) {
+    currentParts.push({ text: prompt });
+  }
+
+  // 4. Add Immediate Attachments (Snapshots/Live Vision)
   currentAttachments.forEach(att => {
     if (att.data) {
         currentParts.push({

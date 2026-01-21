@@ -88,6 +88,19 @@ export default function App() {
     }
   };
 
+  const handleClearAll = async () => {
+    if (confirm("Clear BOTH chat history and context memory? This cannot be undone.")) {
+      try {
+        await Promise.all([db.clearMessages(), db.clearDocuments()]);
+        setMessages([]);
+        setDocuments([]);
+        alert("Nexus memory bank and chat history have been wiped.");
+      } catch (e) {
+        alert("Failed to clear some data.");
+      }
+    }
+  };
+
   const handleResetStorage = async () => {
     if (confirm("This will PERMANENTLY delete all memory documents and chat history. Are you sure?")) {
       try {
@@ -301,6 +314,7 @@ export default function App() {
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         onClearHistory={handleClearHistory}
+        onClearAll={handleClearAll}
         onExportSession={handleExportSession}
         onOpenDocs={() => setIsDocsOpen(true)}
       />
