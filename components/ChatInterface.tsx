@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ChatMessage, AppStatus, ModelType, ChatAttachment } from '../types.ts';
@@ -54,6 +54,7 @@ export default function ChatInterface({
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState<string | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [pendingSnapshot, setPendingSnapshot] = useState<ChatAttachment | null>(null);
   const [showChatSearch, setShowChatSearch] = useState(false);
@@ -92,7 +93,16 @@ export default function ChatInterface({
   }, [autoSpeak]);
 
   // Audio Playback Control
-  const stopSpeech = () => {
+  const stopSpeech = useCallback(async () => {
+    // If context is suspended, resume it before stopping to ensure clean state for next playback
+    if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        try {
+            await audioContextRef.current.resume();
+        } catch (e) {
+            console.error("Error resuming context during stop:", e);
+        }
+    }
+
     if (currentAudioSourceRef.current) {
         try {
             currentAudioSourceRef.current.stop();
@@ -103,16 +113,36 @@ export default function ChatInterface({
         currentAudioSourceRef.current = null;
     }
     setIsSpeaking(null);
-  };
+    setIsPaused(false);
+  }, []);
+
+  const pauseSpeech = useCallback(async () => {
+    if (audioContextRef.current && audioContextRef.current.state === 'running') {
+        await audioContextRef.current.suspend();
+        setIsPaused(true);
+    }
+  }, []);
+
+  const resumeSpeech = useCallback(async () => {
+    if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume();
+        setIsPaused(false);
+    }
+  }, []);
 
   const handleSpeech = async (text: string, messageId: string) => {
     if (isSpeaking === messageId) {
-      stopSpeech();
+      if (isPaused) {
+        resumeSpeech();
+      } else {
+        pauseSpeech();
+      }
       return;
     }
 
     stopSpeech(); // Ensure clean state before starting new
     setIsSpeaking(messageId);
+    setIsPaused(false);
     
     try {
       const base64Audio = await generateSpeech(text);
@@ -120,12 +150,19 @@ export default function ChatInterface({
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
       }
       const ctx = audioContextRef.current;
+      
+      // Ensure context is running if it was previously suspended
+      if (ctx.state === 'suspended') {
+        await ctx.resume();
+      }
+
       const audioBuffer = await decodeAudioData(decode(base64Audio), ctx, 24000, 1);
       const source = ctx.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(ctx.destination);
       source.onended = () => {
         setIsSpeaking(null);
+        setIsPaused(false);
         currentAudioSourceRef.current = null;
       };
       source.start();
@@ -133,6 +170,7 @@ export default function ChatInterface({
     } catch (error) {
       console.error("TTS error:", error);
       setIsSpeaking(null);
+      setIsPaused(false);
     }
   };
 
@@ -442,13 +480,22 @@ export default function ChatInterface({
           
           <div className="flex items-center gap-1">
             {isSpeaking && (
-                <button
-                    onClick={stopSpeech}
-                    className="w-9 h-9 flex items-center justify-center rounded-full transition-colors bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 animate-in fade-in zoom-in duration-200"
-                    title="Stop Speaking"
-                >
-                    <i className="fa-solid fa-stop"></i>
-                </button>
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800 rounded-full px-2 py-1 border border-slate-200 dark:border-zinc-700 animate-in fade-in zoom-in duration-200 mr-2">
+                    <button
+                        onClick={isPaused ? resumeSpeech : pauseSpeech}
+                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 transition-colors"
+                        title={isPaused ? "Resume" : "Pause"}
+                    >
+                        <i className={`fa-solid ${isPaused ? 'fa-play' : 'fa-pause'}`}></i>
+                    </button>
+                    <button
+                        onClick={stopSpeech}
+                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 hover:text-red-600 transition-colors"
+                        title="Stop"
+                    >
+                        <i className="fa-solid fa-stop"></i>
+                    </button>
+                </div>
             )}
             <button
                 onClick={() => setAutoSpeak(!autoSpeak)}
@@ -522,7 +569,9 @@ export default function ChatInterface({
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2"><i className={`fa-solid ${msg.role === 'user' ? 'fa-user-circle' : isPro ? 'fa-brain' : 'fa-bolt-lightning'} text-[10px] opacity-60`}></i><span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest opacity-60">{msg.role === 'user' ? 'Researcher' : `${isPro ? 'Pro' : 'Flash'} Intelligence`}</span></div>
                 {msg.role === 'model' && (
-                  <button onClick={() => handleSpeech(msg.text, msg.id)} title={isSpeaking === msg.id ? "Stop Speaking" : "Read Aloud"} className={`text-xs p-1 rounded-full transition-colors ${isSpeaking === msg.id ? 'text-red-500' : 'text-slate-400 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-zinc-800'}`}><i className={`fa-solid ${isSpeaking === msg.id ? 'fa-stop' : 'fa-volume-low'}`}></i></button>
+                  <button onClick={() => handleSpeech(msg.text, msg.id)} title={isSpeaking === msg.id ? (isPaused ? "Resume" : "Pause") : "Read Aloud"} className={`text-xs p-1 rounded-full transition-colors ${isSpeaking === msg.id ? 'text-indigo-500 dark:text-indigo-400' : 'text-slate-400 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-zinc-800'}`}>
+                    <i className={`fa-solid ${isSpeaking === msg.id ? (isPaused ? 'fa-play' : 'fa-pause') : 'fa-volume-low'}`}></i>
+                  </button>
                 )}
               </div>
               <div className="text-sm md:text-base font-medium">

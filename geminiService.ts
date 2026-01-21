@@ -15,6 +15,17 @@ function stripMarkdown(text: string): string {
     .trim();
 }
 
+/**
+ * Executes a multimodal research task using the Google Gemini 3 API.
+ * 
+ * @param prompt - The user's current text query.
+ * @param history - Array of previous chat messages for context.
+ * @param memory - Array of persistent documents (text/images) from the knowledge base.
+ * @param model - The specific Gemini model to use (Pro vs Flash).
+ * @param currentAttachments - Any temporary images/snapshots attached to the specific prompt.
+ * @param useSearch - Whether to enable the Google Search grounding tool.
+ * @returns A promise resolving to the generated text and any cited sources.
+ */
 export const performResearch = async (
   prompt: string,
   history: ChatMessage[],
@@ -158,6 +169,13 @@ export const performResearch = async (
   return { text, sources };
 };
 
+/**
+ * Transcribes audio data using Gemini Flash 1.5/2.0 multimodal capabilities.
+ * 
+ * @param base64Audio - Raw audio data encoded in base64.
+ * @param mimeType - The mime type of the audio (e.g., 'audio/webm').
+ * @returns The transcribed text.
+ */
 export const transcribeAudio = async (base64Audio: string, mimeType: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
   const response = await ai.models.generateContent({
@@ -177,6 +195,13 @@ export const transcribeAudio = async (base64Audio: string, mimeType: string): Pr
   return response.text?.trim() || "";
 };
 
+/**
+ * Generates speech from text using the Gemini TTS model.
+ * Note: Strips markdown characters before processing to ensure clean speech.
+ * 
+ * @param text - The text to be spoken.
+ * @returns Base64 encoded audio data.
+ */
 export const generateSpeech = async (text: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
   
