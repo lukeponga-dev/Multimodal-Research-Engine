@@ -1,4 +1,3 @@
-
 import React, { useRef, useState } from 'react';
 import { DocumentItem } from '../types.ts';
 
@@ -7,7 +6,6 @@ interface KnowledgeBaseProps {
   onAddDocument: (doc: DocumentItem) => void;
   onRemoveDocument: (id: string) => void;
   onCompareDocuments: (docs: DocumentItem[]) => void;
-  onLoadDemoData: () => void;
   isOpen?: boolean;
   onClose?: () => void;
   onClearHistory: () => void;
@@ -21,7 +19,6 @@ export default function KnowledgeBase({
   onAddDocument, 
   onRemoveDocument,
   onCompareDocuments,
-  onLoadDemoData,
   isOpen = false,
   onClose,
   onClearHistory,
@@ -103,12 +100,6 @@ export default function KnowledgeBase({
             <div className="text-center py-10 flex flex-col items-center">
                 <i className="fa-solid fa-database text-slate-200 dark:text-zinc-800 text-4xl mb-3"></i>
                 <p className="text-[10px] text-slate-400 dark:text-zinc-600 font-bold uppercase tracking-widest mb-4">Memory Idle</p>
-                <button 
-                    onClick={onLoadDemoData}
-                    className="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-lg border border-indigo-100 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
-                >
-                    Load Demo Data
-                </button>
             </div>
         )}
       </div>
