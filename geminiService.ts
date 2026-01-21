@@ -1,6 +1,19 @@
 
-import { GoogleGenAI, GenerateContentResponse, Modality } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse, type Modality } from "@google/genai";
 import { DocumentItem, ChatMessage, GroundingSource, ModelType, ChatAttachment } from "./types";
+
+// Helper to strip markdown for cleaner TTS
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/#{1,6}\s?/g, '') // Remove headers
+    .replace(/\*\*/g, '')      // Remove bold
+    .replace(/\*/g, '')        // Remove italics/bullets (single asterisks)
+    .replace(/`{3}[\s\S]*?`{3}/g, 'Code block omitted.') // Replace code blocks
+    .replace(/`(.+?)`/g, '$1') // Remove inline code ticks
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove links, keep text
+    .replace(/^\s*-\s+/gm, '') // Remove list hyphens
+    .trim();
+}
 
 export const performResearch = async (
   prompt: string,
@@ -166,11 +179,19 @@ export const transcribeAudio = async (base64Audio: string, mimeType: string): Pr
 
 export const generateSpeech = async (text: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+  
+  // Strip markdown for cleaner TTS processing
+  const cleanText = stripMarkdown(text);
+  
+  // Fallback if text is empty after cleaning
+  const promptText = cleanText || "I have no content to read.";
+
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
-    contents: [{ parts: [{ text }] }],
+    contents: [{ parts: [{ text: promptText }] }],
     config: {
-      responseModalities: [Modality.AUDIO],
+      // Use string literal "AUDIO" to prevent runtime issues if Modality enum is undefined
+      responseModalities: ["AUDIO" as Modality],
       speechConfig: {
         voiceConfig: {
           prebuiltVoiceConfig: { voiceName: 'Kore' },

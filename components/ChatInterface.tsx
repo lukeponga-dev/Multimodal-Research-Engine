@@ -1,5 +1,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { ChatMessage, AppStatus, ModelType, ChatAttachment } from '../types.ts';
 import { transcribeAudio, generateSpeech } from '../geminiService.ts';
 import { decode, decodeAudioData } from '../audioUtils.ts';
@@ -19,6 +21,21 @@ interface ChatInterfaceProps {
 
 const escapeRegExp = (string: string) => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
+const HighlightText = ({ text, term }: { text: string, term: string }) => {
+  if (!term || !term.trim()) return <>{text}</>;
+  const regex = new RegExp(`(${escapeRegExp(term)})`, 'gi');
+  const parts = text.split(regex);
+  return (
+    <>
+      {parts.map((part, i) => 
+        regex.test(part) ? (
+           <span key={i} className="bg-amber-300/40 dark:bg-amber-600/40 text-slate-900 dark:text-zinc-50 rounded px-0.5 shadow-sm border border-amber-400/20 font-semibold">{part}</span>
+        ) : part
+      )}
+    </>
+  );
 };
 
 export default function ChatInterface({ 
@@ -151,14 +168,99 @@ export default function ChatInterface({
     return messages.filter(msg => regex.test(msg.text));
   }, [messages, chatSearchTerm]);
 
-  const renderMessageText = (text: string) => {
-    if (!chatSearchTerm.trim()) return text;
-    const regex = new RegExp(`(${escapeRegExp(chatSearchTerm)})`, 'gi');
-    const parts = text.split(regex);
-    return parts.map((part, i) => 
-        regex.test(part) ? <span key={i} className="bg-amber-300/40 dark:bg-amber-600/40 text-slate-900 dark:text-zinc-50 rounded px-0.5 shadow-sm border border-amber-400/20 font-semibold">{part}</span> : part
-    );
-  };
+  const markdownComponents = useMemo(() => {
+    return {
+      p: ({ children }: any) => (
+        <p className="mb-3 last:mb-0 leading-relaxed">
+          {React.Children.map(children, (child) =>
+            typeof child === 'string' ? <HighlightText text={child} term={chatSearchTerm} /> : child
+          )}
+        </p>
+      ),
+      ul: ({ children }: any) => (
+        <ul className="list-disc pl-5 mb-4 space-y-1">{children}</ul>
+      ),
+      ol: ({ children }: any) => (
+        <ol className="list-decimal pl-5 mb-4 space-y-1">{children}</ol>
+      ),
+      li: ({ children }: any) => (
+        <li className="pl-1">
+          {React.Children.map(children, (child) =>
+            typeof child === 'string' ? <HighlightText text={child} term={chatSearchTerm} /> : child
+          )}
+        </li>
+      ),
+      h1: ({ children }: any) => (
+        <h1 className="text-xl md:text-2xl font-bold mb-3 mt-4 border-b border-slate-200 dark:border-zinc-700 pb-2">
+            {React.Children.map(children, (child) =>
+                typeof child === 'string' ? <HighlightText text={child} term={chatSearchTerm} /> : child
+            )}
+        </h1>
+      ),
+      h2: ({ children }: any) => (
+        <h2 className="text-lg md:text-xl font-bold mb-2 mt-4 text-slate-800 dark:text-zinc-100">
+             {React.Children.map(children, (child) =>
+                typeof child === 'string' ? <HighlightText text={child} term={chatSearchTerm} /> : child
+            )}
+        </h2>
+      ),
+      h3: ({ children }: any) => (
+        <h3 className="text-base md:text-lg font-bold mb-2 mt-3 text-slate-700 dark:text-zinc-200">
+             {React.Children.map(children, (child) =>
+                typeof child === 'string' ? <HighlightText text={child} term={chatSearchTerm} /> : child
+            )}
+        </h3>
+      ),
+      code: ({ node, inline, className, children, ...props }: any) => {
+        if (inline) {
+          return (
+            <code className="font-mono text-xs md:text-sm bg-slate-200 dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 px-1 py-0.5 rounded" {...props}>
+              {children}
+            </code>
+          );
+        }
+        return (
+          <div className="relative my-3 rounded-lg overflow-hidden bg-slate-900 text-slate-100 shadow-md">
+            <div className="flex items-center justify-between px-3 py-1.5 bg-slate-800/50 border-b border-white/10">
+                <div className="flex gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/80"></div>
+                    <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80"></div>
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/80"></div>
+                </div>
+                <span className="text-[10px] font-mono opacity-50">code</span>
+            </div>
+            <pre className="p-3 overflow-x-auto text-xs md:text-sm font-mono leading-relaxed">
+              <code {...props}>{children}</code>
+            </pre>
+          </div>
+        );
+      },
+      blockquote: ({ children }: any) => (
+        <blockquote className="border-l-4 border-indigo-300 dark:border-indigo-700 pl-4 italic my-3 text-slate-600 dark:text-zinc-400 bg-slate-50 dark:bg-zinc-800/50 py-2 pr-2 rounded-r-lg">
+          {children}
+        </blockquote>
+      ),
+      table: ({ children }: any) => (
+        <div className="overflow-x-auto my-4 rounded-lg border border-slate-200 dark:border-zinc-700">
+          <table className="min-w-full divide-y divide-slate-200 dark:divide-zinc-700 text-sm">{children}</table>
+        </div>
+      ),
+      thead: ({ children }: any) => (
+        <thead className="bg-slate-100 dark:bg-zinc-800">{children}</thead>
+      ),
+      th: ({ children }: any) => (
+        <th className="px-4 py-2 text-left text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">{children}</th>
+      ),
+      td: ({ children }: any) => (
+        <td className="px-4 py-2 whitespace-nowrap text-slate-700 dark:text-zinc-300 border-t border-slate-100 dark:border-zinc-800">{children}</td>
+      ),
+      a: ({ href, children }: any) => (
+        <a href={href} target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline decoration-2 underline-offset-2 font-medium">
+          {children}
+        </a>
+      ),
+    };
+  }, [chatSearchTerm, isDarkMode]);
 
   const drawVisualizer = () => {
     if (!analyserRef.current || !canvasRef.current) return;
@@ -423,7 +525,11 @@ export default function ChatInterface({
                   <button onClick={() => handleSpeech(msg.text, msg.id)} title={isSpeaking === msg.id ? "Stop Speaking" : "Read Aloud"} className={`text-xs p-1 rounded-full transition-colors ${isSpeaking === msg.id ? 'text-red-500' : 'text-slate-400 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-zinc-800'}`}><i className={`fa-solid ${isSpeaking === msg.id ? 'fa-stop' : 'fa-volume-low'}`}></i></button>
                 )}
               </div>
-              <div className="text-sm md:text-base leading-relaxed whitespace-pre-wrap font-medium">{renderMessageText(msg.text)}</div>
+              <div className="text-sm md:text-base font-medium">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                    {msg.text}
+                  </ReactMarkdown>
+              </div>
               {msg.sources && msg.sources.length > 0 && (
                 <div className="mt-4 pt-4 border-t border-slate-100 dark:border-zinc-800"><p className="text-[8px] md:text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-3 flex items-center gap-1"><i className="fa-solid fa-earth-americas"></i> Verified Search Grounding</p><div className="flex flex-wrap gap-2">{msg.sources.map((src, i) => (<a key={i} href={src.uri} target="_blank" rel="noreferrer" className="text-[9px] md:text-[10px] bg-slate-50 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 border border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-zinc-400 px-2 py-1 rounded-lg transition-all truncate max-w-[220px]">{src.title}</a>))}</div></div>
               )}
