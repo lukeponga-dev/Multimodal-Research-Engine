@@ -11,7 +11,7 @@ interface ChatInterfaceProps {
   setUseSearch: (v: boolean) => void;
   selectedModel: ModelType;
   onModelChange: (model: ModelType) => void;
-  onSendMessage: (msg: string, attachments?: ChatAttachment[], autoSpeak?: boolean) => void;
+  onSendMessage: (msg: string, attachments?: ChatAttachment[]) => void;
   onToggleSidebar: () => void;
   isDarkMode: boolean;
   onToggleTheme: () => void;
@@ -51,6 +51,9 @@ export default function ChatInterface({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const currentAudioSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const lastReadMessageIdRef = useRef<string | null>(null);
+  
   const analyserRef = useRef<AnalyserNode | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -70,6 +73,71 @@ export default function ChatInterface({
   useEffect(() => {
     localStorage.setItem('nexus_autospeak_v1', autoSpeak.toString());
   }, [autoSpeak]);
+
+  // Audio Playback Control
+  const stopSpeech = () => {
+    if (currentAudioSourceRef.current) {
+        try {
+            currentAudioSourceRef.current.stop();
+            currentAudioSourceRef.current.disconnect();
+        } catch (e) {
+            // ignore errors if already stopped
+        }
+        currentAudioSourceRef.current = null;
+    }
+    setIsSpeaking(null);
+  };
+
+  const handleSpeech = async (text: string, messageId: string) => {
+    if (isSpeaking === messageId) {
+      stopSpeech();
+      return;
+    }
+
+    stopSpeech(); // Ensure clean state before starting new
+    setIsSpeaking(messageId);
+    
+    try {
+      const base64Audio = await generateSpeech(text);
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+      }
+      const ctx = audioContextRef.current;
+      const audioBuffer = await decodeAudioData(decode(base64Audio), ctx, 24000, 1);
+      const source = ctx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(ctx.destination);
+      source.onended = () => {
+        setIsSpeaking(null);
+        currentAudioSourceRef.current = null;
+      };
+      source.start();
+      currentAudioSourceRef.current = source;
+    } catch (error) {
+      console.error("TTS error:", error);
+      setIsSpeaking(null);
+    }
+  };
+
+  // Auto-speak Effect
+  useEffect(() => {
+    // Prevent reading full history on load
+    if (lastReadMessageIdRef.current === null && messages.length > 0) {
+        lastReadMessageIdRef.current = messages[messages.length - 1].id;
+        return;
+    }
+    
+    if (messages.length === 0) return;
+    const lastMsg = messages[messages.length - 1];
+    
+    // Only process if it's a new message
+    if (lastMsg.id !== lastReadMessageIdRef.current) {
+        lastReadMessageIdRef.current = lastMsg.id;
+        if (lastMsg.role === 'model' && autoSpeak) {
+            handleSpeech(lastMsg.text, lastMsg.id);
+        }
+    }
+  }, [messages, autoSpeak]);
 
   const displayedMessages = useMemo(() => {
     if (!chatSearchTerm.trim()) return messages;
@@ -118,8 +186,12 @@ export default function ChatInterface({
     e?.preventDefault();
     if ((!input.trim() && !pendingSnapshot) || status === AppStatus.LOADING || isTranscribing) return;
     const attachments = pendingSnapshot ? [pendingSnapshot] : [];
-    // Pass autoSpeak preference
-    onSendMessage(input, attachments, autoSpeak);
+    // If user is speaking (voice mode), we ensure auto-speak is temporarily favored or just rely on global setting
+    // But since we removed autoSpeak param from prop, we rely on the useEffect.
+    // If voice input was used, we might want to ensure autoSpeak is on? 
+    // For now, let's respect the user's toggle state.
+    
+    onSendMessage(input, attachments);
     setInput('');
     setPendingSnapshot(null);
     setIsCameraOpen(false);
@@ -170,6 +242,7 @@ export default function ChatInterface({
   const startRecording = async () => {
     if (isTranscribing || status === AppStatus.LOADING) return;
     try {
+      stopSpeech(); // Stop TTS if user starts speaking
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -194,8 +267,7 @@ export default function ChatInterface({
           try {
             const transcription = await transcribeAudio(base64Audio, 'audio/webm');
             if (transcription) {
-              // Voice input defaults to speaking response (conversational mode)
-              onSendMessage(transcription, pendingSnapshot ? [pendingSnapshot] : [], true);
+              onSendMessage(transcription, pendingSnapshot ? [pendingSnapshot] : []);
               setInput('');
               setPendingSnapshot(null);
             }
@@ -218,27 +290,6 @@ export default function ChatInterface({
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-    }
-  };
-
-  const handleSpeech = async (text: string, messageId: string) => {
-    if (isSpeaking) return;
-    setIsSpeaking(messageId);
-    try {
-      const base64Audio = await generateSpeech(text);
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-      }
-      const ctx = audioContextRef.current;
-      const audioBuffer = await decodeAudioData(decode(base64Audio), ctx, 24000, 1);
-      const source = ctx.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(ctx.destination);
-      source.onended = () => setIsSpeaking(null);
-      source.start();
-    } catch (error) {
-      console.error("TTS error:", error);
-      setIsSpeaking(null);
     }
   };
 
@@ -285,13 +336,24 @@ export default function ChatInterface({
             <i className="fa-solid fa-chevron-down absolute right-3 text-[8px] text-slate-400 pointer-events-none"></i>
           </div>
           
-          <button
-            onClick={() => setAutoSpeak(!autoSpeak)}
-            className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${autoSpeak ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800'}`}
-            title={autoSpeak ? "Auto-speak: ON" : "Auto-speak: OFF"}
-          >
-            <i className={`fa-solid ${autoSpeak ? 'fa-volume-high' : 'fa-volume-xmark'}`}></i>
-          </button>
+          <div className="flex items-center gap-1">
+            {isSpeaking && (
+                <button
+                    onClick={stopSpeech}
+                    className="w-9 h-9 flex items-center justify-center rounded-full transition-colors bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 animate-in fade-in zoom-in duration-200"
+                    title="Stop Speaking"
+                >
+                    <i className="fa-solid fa-stop"></i>
+                </button>
+            )}
+            <button
+                onClick={() => setAutoSpeak(!autoSpeak)}
+                className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${autoSpeak ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800'}`}
+                title={autoSpeak ? "Auto-speak: ON" : "Auto-speak: OFF"}
+            >
+                <i className={`fa-solid ${autoSpeak ? 'fa-volume-high' : 'fa-volume-xmark'}`}></i>
+            </button>
+          </div>
 
           <button onClick={onToggleTheme} className="w-9 h-9 flex items-center justify-center text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors"><i className={`fa-solid ${isDarkMode ? 'fa-sun' : 'fa-moon'}`}></i></button>
           <div className="flex items-center gap-2 bg-slate-100 dark:bg-zinc-800 rounded-full px-2 md:px-3 py-1 border border-slate-200 dark:border-zinc-700 shrink-0">
@@ -356,7 +418,7 @@ export default function ChatInterface({
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2"><i className={`fa-solid ${msg.role === 'user' ? 'fa-user-circle' : isPro ? 'fa-brain' : 'fa-bolt-lightning'} text-[10px] opacity-60`}></i><span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest opacity-60">{msg.role === 'user' ? 'Researcher' : `${isPro ? 'Pro' : 'Flash'} Intelligence`}</span></div>
                 {msg.role === 'model' && (
-                  <button onClick={() => handleSpeech(msg.text, msg.id)} title="Read Aloud" className={`text-xs p-1 rounded-full transition-colors ${isSpeaking === msg.id ? 'text-indigo-500 animate-pulse' : 'text-slate-400 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-zinc-800'}`}><i className={`fa-solid ${isSpeaking === msg.id ? 'fa-volume-high' : 'fa-volume-low'}`}></i></button>
+                  <button onClick={() => handleSpeech(msg.text, msg.id)} title={isSpeaking === msg.id ? "Stop Speaking" : "Read Aloud"} className={`text-xs p-1 rounded-full transition-colors ${isSpeaking === msg.id ? 'text-red-500' : 'text-slate-400 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-zinc-800'}`}><i className={`fa-solid ${isSpeaking === msg.id ? 'fa-stop' : 'fa-volume-low'}`}></i></button>
                 )}
               </div>
               <div className="text-sm md:text-base leading-relaxed whitespace-pre-wrap font-medium">{renderMessageText(msg.text)}</div>

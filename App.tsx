@@ -4,9 +4,8 @@ import KnowledgeBase from './components/KnowledgeBase.tsx';
 import ChatInterface from './components/ChatInterface.tsx';
 import DocsModal from './components/DocsModal.tsx';
 import { DocumentItem, ChatMessage, AppStatus, ModelType, ChatAttachment } from './types.ts';
-import { performResearch, generateSpeech } from './geminiService.ts';
+import { performResearch } from './geminiService.ts';
 import { db } from './db.ts';
-import { decode, decodeAudioData } from './audioUtils.ts';
 
 const STORAGE_KEYS = {
   THEME: 'nexus_theme_v1',
@@ -34,8 +33,6 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDocsOpen, setIsDocsOpen] = useState(false);
   
-  const audioContextRef = useRef<AudioContext | null>(null);
-
   const initData = async () => {
     setInitError(null);
     setIsInitializing(true);
@@ -174,24 +171,7 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
-  const speakResponse = async (text: string) => {
-    try {
-      const base64Audio = await generateSpeech(text);
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-      }
-      const ctx = audioContextRef.current;
-      const audioBuffer = await decodeAudioData(decode(base64Audio), ctx, 24000, 1);
-      const source = ctx.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(ctx.destination);
-      source.start();
-    } catch (e) {
-      console.error("Auto-speak failed", e);
-    }
-  };
-
-  const handleSendMessage = useCallback(async (text: string, attachments: ChatAttachment[] = [], autoSpeak: boolean = false) => {
+  const handleSendMessage = useCallback(async (text: string, attachments: ChatAttachment[] = []) => {
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
@@ -227,9 +207,7 @@ export default function App() {
       db.addMessage(aiMsg).catch(console.error);
       setStatus(AppStatus.IDLE);
 
-      if (autoSpeak) {
-        speakResponse(responseText);
-      }
+      // Auto-speak logic is now handled in ChatInterface via useEffect
 
     } catch (error) {
       console.error("Research Error:", error);
