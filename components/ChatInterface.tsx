@@ -1,10 +1,9 @@
-
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { ChatMessage, AppStatus, ModelType, ChatAttachment } from '../types.ts';
-import { transcribeAudio, generateSpeech } from '../geminiService.ts';
-import { decode, decodeAudioData } from '../audioUtils.ts';
+import { ChatMessage, AppStatus, ModelType, ChatAttachment } from '@/types';
+import { transcribeAudio, generateSpeech } from '@/geminiService';
+import { decode, decodeAudioData } from '@/audioUtils';
 
 interface ChatInterfaceProps {
   messages: ChatMessage[];
@@ -630,12 +629,12 @@ export default function ChatInterface({
 
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-slate-800 dark:text-zinc-100 font-bold tracking-tight">
-                      {isTranscribing ? 'Nexus Audio Engine' : `Nexus ${isPro ? 'Pro' : 'Flash'}`}
+                    <span className="text-sm text-slate-800 dark:text-zinc-100 font-bold animate-pulse">
+                      {isTranscribing ? 'Processing Audio Input...' : isPro ? 'Reasoning Deeply...' : 'Synthesizing Response...'}
                     </span>
                   </div>
-                  <span className={`text-[10px] font-bold uppercase tracking-widest ${isTranscribing ? 'text-amber-500 animate-pulse' : (isPro ? 'text-indigo-600 dark:text-indigo-400 animate-pulse' : 'text-emerald-500')}`}>
-                      {isTranscribing ? 'Transcribing Input...' : (isPro ? 'Deep Reasoning Active...' : 'Rapid Synthesis...')}
+                  <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium tracking-wide">
+                    {isTranscribing ? 'Converting speech to text' : isPro ? 'Analyzing complex patterns' : 'Rapid context retrieval'}
                   </span>
                 </div>
              </div>
@@ -644,128 +643,69 @@ export default function ChatInterface({
         <div ref={bottomRef} className="h-4" />
       </div>
 
-      {/* Sensory Input Deck */}
-      <div className="p-4 md:p-6 bg-white dark:bg-zinc-900 border-t border-slate-200 dark:border-zinc-800 sticky bottom-0 transition-colors z-20">
-        <form onSubmit={handleSubmit} className="max-w-5xl mx-auto flex flex-col gap-4">
-            {pendingSnapshot && (
-              <div className="flex items-center gap-4 animate-in slide-in-from-bottom-2 duration-300 p-3 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-2xl border border-indigo-100 dark:border-indigo-900/30 mb-2">
-                <div className="relative group shrink-0">
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl blur opacity-30 group-hover:opacity-60 transition duration-200"></div>
-                    <img 
-                        src={`data:${pendingSnapshot.mimeType};base64,${pendingSnapshot.data}`} 
-                        className="relative w-24 h-24 object-cover rounded-lg shadow-sm"
-                        alt="Context" 
-                    />
-                    <button 
-                        type="button"
-                        onClick={() => setPendingSnapshot(null)}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-white dark:bg-zinc-800 text-slate-500 hover:text-red-500 rounded-full shadow-md border border-slate-100 dark:border-zinc-700 flex items-center justify-center transition-transform hover:scale-110 z-10"
-                    >
-                        <i className="fa-solid fa-xmark text-xs"></i>
-                    </button>
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                   <div className="flex items-center gap-2 mb-1">
-                     <span className="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">Vision</span>
-                     <span className="text-xs font-bold text-slate-700 dark:text-zinc-200 truncate">Image Context Attached</span>
-                   </div>
-                   <p className="text-[10px] text-slate-500 dark:text-zinc-400 leading-tight mb-2">
-                     Nexus will analyze this image. Add a text prompt below or send as is.
-                   </p>
+      {/* Input Area */}
+      <div className="p-4 md:p-6 bg-white dark:bg-zinc-900 border-t border-slate-200 dark:border-zinc-800 relative z-20">
+        <form onSubmit={handleSubmit} className="relative max-w-4xl mx-auto">
+          {pendingSnapshot && (
+            <div className="absolute -top-24 left-0 p-2 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-slate-200 dark:border-zinc-700 animate-in slide-in-from-bottom-4">
+              <div className="relative">
+                <img src={`data:${pendingSnapshot.mimeType};base64,${pendingSnapshot.data}`} alt="Snapshot" className="h-16 w-16 object-cover rounded-lg" />
+                <button type="button" onClick={() => setPendingSnapshot(null)} className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] shadow-sm hover:bg-red-600 transition-colors"><i className="fa-solid fa-xmark"></i></button>
+              </div>
+            </div>
+          )}
+          
+          <div className="flex items-end gap-2 bg-slate-100 dark:bg-zinc-800/50 p-2 rounded-3xl border border-slate-200 dark:border-zinc-700 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500/50 transition-all shadow-sm">
+             <button type="button" onClick={startCamera} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-indigo-500 hover:bg-white dark:hover:bg-zinc-700 transition-all shrink-0" title="Take Photo">
+              <i className="fa-solid fa-camera"></i>
+            </button>
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit();
+                }
+              }}
+              placeholder={isRecording ? "Listening..." : "Message Nexus..."}
+              className="flex-1 bg-transparent border-none focus:ring-0 text-slate-800 dark:text-zinc-100 placeholder:text-slate-400 py-3 max-h-32 min-h-[44px] resize-none text-sm md:text-base"
+              rows={1}
+              disabled={isRecording || status === AppStatus.LOADING}
+            />
+            
+            {isRecording ? (
+               <div className="flex items-center gap-2 pr-2">
+                 <canvas ref={canvasRef} width="60" height="30" className="rounded"></canvas>
+                 <button type="button" onPointerUp={stopRecording} onMouseUp={stopRecording} onTouchEnd={stopRecording} className="w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center animate-pulse shadow-lg shadow-red-500/30">
+                   <i className="fa-solid fa-stop"></i>
+                 </button>
+               </div>
+            ) : (
+                <div className="flex items-center gap-1">
                    <button 
-                    type="submit"
-                    className="text-[10px] bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:border-indigo-300 dark:hover:border-indigo-700 text-slate-600 dark:text-zinc-300 px-3 py-1.5 rounded-lg font-bold uppercase tracking-wide transition-all shadow-sm hover:shadow"
+                      type="button" 
+                      onPointerDown={startRecording} 
+                      onMouseDown={startRecording}
+                      onTouchStart={(e) => { e.preventDefault(); startRecording(); }}
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-white dark:hover:bg-zinc-700 transition-all"
+                      title="Hold to Speak"
                    >
-                     Analyze Image Only <i className="fa-solid fa-arrow-right ml-1"></i>
+                     <i className="fa-solid fa-microphone"></i>
+                   </button>
+                   <button 
+                      type="submit" 
+                      disabled={!input.trim() && !pendingSnapshot}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-md ${(!input.trim() && !pendingSnapshot) ? 'bg-slate-200 dark:bg-zinc-700 text-slate-400 dark:text-zinc-500 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-105 shadow-indigo-500/20'}`}
+                   >
+                     <i className="fa-solid fa-paper-plane text-sm"></i>
                    </button>
                 </div>
-              </div>
             )}
-
-            <div className="flex gap-3 relative">
-                {isRecording && (
-                    <div className="absolute inset-0 z-30 bg-red-50 dark:bg-red-950/20 backdrop-blur-sm rounded-2xl flex items-center px-4 border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all">
-                        <div className="flex items-center gap-4 w-full">
-                          <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center shrink-0 animate-pulse">
-                            <i className="fa-solid fa-microphone text-red-600 dark:text-red-400 text-lg"></i>
-                          </div>
-                          <div className="flex-1 flex flex-col justify-center h-full overflow-hidden relative">
-                             <canvas ref={canvasRef} width={300} height={40} className="w-full h-10 opacity-80"></canvas>
-                          </div>
-                          <span className="text-[10px] font-black text-red-500 uppercase tracking-widest whitespace-nowrap animate-pulse">
-                             Release to Send
-                          </span>
-                        </div>
-                    </div>
-                )}
-                
-                {isTranscribing && (
-                   <div className="absolute inset-0 z-30 bg-amber-50/90 dark:bg-zinc-900/95 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-amber-500/30 transition-all">
-                      <div className="flex items-center gap-3">
-                        <div className="flex gap-1 items-center">
-                          <div className="w-1.5 h-4 bg-amber-500 rounded-full animate-[bounce_1s_infinite]"></div>
-                          <div className="w-1.5 h-6 bg-amber-500 rounded-full animate-[bounce_1s_infinite_0.1s]"></div>
-                          <div className="w-1.5 h-4 bg-amber-500 rounded-full animate-[bounce_1s_infinite_0.2s]"></div>
-                        </div>
-                        <span className="text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-[0.2em] animate-pulse">Processing Voice Input...</span>
-                      </div>
-                   </div>
-                )}
-
-                <div className="relative flex-1 group flex items-center">
-                    <input
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        placeholder={pendingSnapshot ? "Provide context for this visual..." : `Query Nexus ${isPro ? 'Pro' : 'Flash'}...`}
-                        className={`w-full bg-slate-100 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl py-4 md:py-5 px-5 md:px-6 text-sm md:text-base focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:focus:border-indigo-500/50 transition-all pr-32 text-slate-800 dark:text-zinc-100 font-medium placeholder:text-slate-400 dark:placeholder:text-zinc-600`}
-                        disabled={status === AppStatus.LOADING || isTranscribing}
-                    />
-                    <div className="absolute right-3 flex items-center gap-2">
-                        <button
-                            type="button"
-                            onClick={() => isCameraOpen ? stopCamera() : startCamera()}
-                            className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${isCameraOpen ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-indigo-500 hover:bg-slate-200 dark:hover:bg-zinc-800'}`}
-                            title="Live Vision"
-                            disabled={isTranscribing}
-                        >
-                            <i className="fa-solid fa-camera"></i>
-                        </button>
-
-                        <button
-                            type="button"
-                            onMouseDown={startRecording}
-                            onMouseUp={stopRecording}
-                            onMouseLeave={stopRecording}
-                            onTouchStart={startRecording}
-                            onTouchEnd={stopRecording}
-                            className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all relative ${isRecording ? 'bg-red-500 text-white scale-110 shadow-lg shadow-red-500/40 ring-4 ring-red-500/20' : 'text-slate-400 hover:text-indigo-500 hover:bg-slate-200 dark:hover:bg-zinc-800'}`}
-                            title="Hold to Speak"
-                            disabled={isTranscribing || status === AppStatus.LOADING}
-                        >
-                            <i className={`fa-solid ${isRecording ? 'fa-waveform-lines animate-pulse' : 'fa-microphone'}`}></i>
-                            {isRecording && (
-                              <span className="absolute -top-12 left-1/2 -translate-x-1/2 bg-red-500 text-white text-[8px] font-black px-2 py-1 rounded shadow-lg whitespace-nowrap animate-bounce">HOLDING</span>
-                            )}
-                        </button>
-                    </div>
-                </div>
-                
-                <button
-                    type="submit"
-                    disabled={status === AppStatus.LOADING || isTranscribing || (!input.trim() && !pendingSnapshot)}
-                    className={`${isPro ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-emerald-600 hover:bg-emerald-700'} disabled:bg-slate-200 dark:disabled:bg-zinc-800 disabled:text-slate-400 dark:disabled:text-zinc-600 text-white rounded-2xl px-6 py-2 transition-all flex items-center justify-center shrink-0 shadow-xl min-w-[140px] border-b-4 ${isPro ? 'border-indigo-800' : 'border-emerald-800'} active:border-b-0 active:translate-y-1 transform`}
-                >
-                    {status === AppStatus.LOADING ? (
-                      <i className="fa-solid fa-spinner-third animate-spin"></i>
-                    ) : (
-                      <>
-                        <i className={`fa-solid ${isPro ? 'fa-atom' : 'fa-bolt'} text-sm`}></i>
-                        <span className="text-sm font-black hidden sm:inline ml-2 uppercase tracking-widest">Analyze</span>
-                      </>
-                    )}
-                </button>
-            </div>
+          </div>
+          <p className="text-[10px] text-center text-slate-400 dark:text-zinc-600 mt-2">
+            Nexus can make mistakes. Verify important information.
+          </p>
         </form>
       </div>
     </div>
