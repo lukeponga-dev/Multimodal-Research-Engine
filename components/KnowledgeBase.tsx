@@ -7,6 +7,7 @@ interface KnowledgeBaseProps {
   onAddDocument: (doc: DocumentItem) => void;
   onRemoveDocument: (id: string) => void;
   onCompareDocuments: (docs: DocumentItem[]) => void;
+  onLoadDemoData: () => void;
   isOpen?: boolean;
   onClose?: () => void;
   onClearHistory: () => void;
@@ -20,6 +21,7 @@ export default function KnowledgeBase({
   onAddDocument, 
   onRemoveDocument,
   onCompareDocuments,
+  onLoadDemoData,
   isOpen = false,
   onClose,
   onClearHistory,
@@ -65,6 +67,16 @@ export default function KnowledgeBase({
     setSelectedIds(new Set());
     if (window.innerWidth < 768 && onClose) onClose();
   };
+  
+  const handleClearHistoryAction = () => {
+    onClearHistory();
+    if (window.innerWidth < 768 && onClose) onClose();
+  };
+
+  const handleClearAllAction = () => {
+    onClearAll();
+    if (window.innerWidth < 768 && onClose) onClose();
+  };
 
   return (
     <div className={`fixed md:relative inset-y-0 left-0 z-50 w-80 bg-white dark:bg-zinc-950 border-r border-slate-200 dark:border-zinc-800 transform transition-transform duration-300 ease-in-out flex flex-col h-full ${isOpen ? 'translate-x-0 shadow-2xl md:shadow-none' : '-translate-x-full md:translate-x-0'}`}>
@@ -78,34 +90,45 @@ export default function KnowledgeBase({
           <p className="text-[10px] text-slate-500 dark:text-zinc-500 font-bold uppercase tracking-wider group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Upload Data</p>
           <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept=".txt,.json,.md,image/*" />
         </div>
-        {selectedIds.size > 1 && (<button onClick={handleCompare} className="w-full py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-indigo-500/20 animate-in slide-in-from-top-2 flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all"><i className="fa-solid fa-layer-group"></i>Compare {selectedIds.size} Selected</button>)}
+        {selectedIds.size > 1 && (<button type="button" onClick={handleCompare} className="w-full py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-indigo-500/20 animate-in slide-in-from-top-2 flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all"><i className="fa-solid fa-layer-group"></i>Compare {selectedIds.size} Selected</button>)}
         {documents.map((doc) => (
           <div key={doc.id} className={`group p-3 bg-white dark:bg-zinc-900/50 border rounded-xl shadow-sm hover:shadow-md transition-all relative overflow-hidden cursor-pointer ${selectedIds.has(doc.id) ? 'border-indigo-500 ring-1 ring-indigo-500/20' : 'border-slate-200 dark:border-zinc-800'}`} onClick={() => toggleSelect(doc.id)}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 max-w-[85%]"><div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedIds.has(doc.id) ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-zinc-800 text-slate-400'}`}>{selectedIds.has(doc.id) ? <i className="fa-solid fa-check text-[10px]"></i> : <div className="w-2 h-2 rounded-full border border-slate-300 dark:border-zinc-600"></div>}</div><div className="flex items-center gap-2 truncate"><i className={`fa-solid ${doc.type === 'image' ? 'fa-image text-emerald-500' : doc.type === 'json' ? 'fa-file-code text-orange-400' : 'fa-file-lines text-blue-400'} text-[10px]`}></i><p className="text-[11px] font-semibold text-slate-700 dark:text-zinc-300 truncate">{doc.name}</p></div></div>
-              <button onClick={(e) => { e.stopPropagation(); onRemoveDocument(doc.id); }} className="opacity-100 md:opacity-0 group-hover:opacity-100 p-1 text-slate-400 dark:text-zinc-600 hover:text-red-500 transition-opacity"><i className="fa-solid fa-trash-can text-[10px]"></i></button>
+              <button type="button" onClick={(e) => { e.stopPropagation(); onRemoveDocument(doc.id); }} className="opacity-100 md:opacity-0 group-hover:opacity-100 p-1 text-slate-400 dark:text-zinc-600 hover:text-red-500 transition-opacity"><i className="fa-solid fa-trash-can text-[10px]"></i></button>
             </div>
           </div>
         ))}
-        {documents.length === 0 && (<div className="text-center py-10 opacity-50"><i className="fa-solid fa-database text-slate-200 dark:text-zinc-800 text-4xl mb-3"></i><p className="text-[10px] text-slate-400 dark:text-zinc-600 font-bold uppercase tracking-widest">Memory Idle</p></div>)}
+        {documents.length === 0 && (
+            <div className="text-center py-10 flex flex-col items-center">
+                <i className="fa-solid fa-database text-slate-200 dark:text-zinc-800 text-4xl mb-3"></i>
+                <p className="text-[10px] text-slate-400 dark:text-zinc-600 font-bold uppercase tracking-widest mb-4">Memory Idle</p>
+                <button 
+                    onClick={onLoadDemoData}
+                    className="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-lg border border-indigo-100 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
+                >
+                    Load Demo Data
+                </button>
+            </div>
+        )}
       </div>
       <div className="p-4 bg-slate-50 dark:bg-zinc-950 border-t border-slate-200 dark:border-zinc-800">
         <div className="space-y-4">
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-3 shadow-sm"><div className="flex justify-between items-center mb-1.5"><p className="text-[9px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Memory Usage</p><span className={`text-[9px] font-bold ${documents.length > 0 ? 'text-indigo-500' : 'text-slate-400'}`}>{documents.length > 0 ? 'Active' : 'Idle'}</span></div><div className="h-1.5 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500" style={{ width: `${Math.min(documents.length * 10, 100)}%` }}></div></div></div>
           <div><p className="text-[9px] font-bold text-slate-400 dark:text-zinc-600 uppercase tracking-widest mb-2 ml-1">Action Area</p><div className="grid grid-cols-2 gap-2">
-            <button onClick={onOpenDocs} className="flex flex-col items-center justify-center p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md hover:shadow-indigo-500/10 transition-all group">
+            <button type="button" onClick={onOpenDocs} className="flex flex-col items-center justify-center p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md hover:shadow-indigo-500/10 transition-all group">
               <i className="fa-solid fa-book-open text-slate-400 group-hover:text-indigo-500 mb-1.5 text-sm transition-colors"></i>
               <span className="text-[9px] font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">Docs</span>
             </button>
-            <button onClick={onExportSession} className="flex flex-col items-center justify-center p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md hover:shadow-emerald-500/10 transition-all group">
+            <button type="button" onClick={onExportSession} className="flex flex-col items-center justify-center p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md hover:shadow-emerald-500/10 transition-all group">
               <i className="fa-solid fa-file-export text-slate-400 group-hover:text-emerald-500 mb-1.5 text-sm transition-colors"></i>
               <span className="text-[9px] font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">Export</span>
             </button>
-            <button onClick={onClearHistory} className="flex flex-col items-center justify-center p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-red-300 dark:hover:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all group">
+            <button type="button" onClick={handleClearHistoryAction} className="flex flex-col items-center justify-center p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-red-300 dark:hover:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all group">
               <i className="fa-solid fa-message text-slate-400 group-hover:text-red-500 transition-colors"></i>
               <span className="text-[9px] font-bold text-slate-600 dark:text-zinc-400 group-hover:text-red-600 dark:group-hover:text-red-400 uppercase tracking-wider text-center">Clear Chat</span>
             </button>
-            <button onClick={onClearAll} className="flex flex-col items-center justify-center p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-red-400 dark:hover:border-red-900 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all group border-b-2 border-red-100 dark:border-red-900/20">
+            <button type="button" onClick={handleClearAllAction} className="flex flex-col items-center justify-center p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-red-400 dark:hover:border-red-900 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all group border-b-2 border-red-100 dark:border-red-900/20">
               <i className="fa-solid fa-trash-can text-slate-400 group-hover:text-red-600 transition-colors"></i>
               <span className="text-[9px] font-bold text-slate-600 dark:text-zinc-400 group-hover:text-red-600 dark:group-hover:text-red-400 uppercase tracking-wider text-center">Clear All</span>
             </button>
