@@ -1,5 +1,4 @@
-
-import { GoogleGenAI, GenerateContentResponse, type Modality } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse, Modality } from "@google/genai";
 import { DocumentItem, ChatMessage, GroundingSource, ModelType, ChatAttachment } from "./types";
 
 // Helper to strip markdown for cleaner TTS
@@ -34,7 +33,7 @@ export const performResearch = async (
   currentAttachments: ChatAttachment[] = [],
   useSearch: boolean = true
 ): Promise<{ text: string; sources: GroundingSource[] }> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
   const isPro = model === 'gemini-3-pro-preview';
   const modelNameLabel = isPro ? 'Pro' : 'Flash';
@@ -177,7 +176,7 @@ export const performResearch = async (
  * @returns The transcribed text.
  */
 export const transcribeAudio = async (base64Audio: string, mimeType: string): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: {
@@ -203,7 +202,7 @@ export const transcribeAudio = async (base64Audio: string, mimeType: string): Pr
  * @returns Base64 encoded audio data.
  */
 export const generateSpeech = async (text: string): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
   
   // Strip markdown for cleaner TTS processing
   const cleanText = stripMarkdown(text);
@@ -215,8 +214,7 @@ export const generateSpeech = async (text: string): Promise<string> => {
     model: "gemini-2.5-flash-preview-tts",
     contents: [{ parts: [{ text: promptText }] }],
     config: {
-      // Use string literal "AUDIO" to prevent runtime issues if Modality enum is undefined
-      responseModalities: ["AUDIO" as Modality],
+      responseModalities: [Modality.AUDIO],
       speechConfig: {
         voiceConfig: {
           prebuiltVoiceConfig: { voiceName: 'Kore' },
