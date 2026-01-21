@@ -159,16 +159,14 @@ error_variance,0.047`
     }
   };
 
-  const handleClearAll = async () => {
-    if (confirm("Clear BOTH chat history and context memory? This cannot be undone.")) {
+  const handleClearMemory = async () => {
+    if (confirm("Delete all data from context memory? This action cannot be undone.")) {
       try {
-        await Promise.all([db.clearMessages(), db.clearDocuments()]);
-        setMessages([]);
+        await db.clearDocuments();
         setDocuments([]);
-        setStatus(AppStatus.IDLE);
-        alert("Nexus memory bank and chat history have been wiped.");
       } catch (e) {
-        alert("Failed to clear some data.");
+        console.error("Failed to clear memory", e);
+        alert("Failed to clear context memory.");
       }
     }
   };
@@ -368,7 +366,7 @@ error_variance,0.047`
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         onClearHistory={handleClearHistory}
-        onClearAll={handleClearAll}
+        onClearMemory={handleClearMemory}
         onExportSession={handleExportSession}
         onOpenDocs={() => setIsDocsOpen(true)}
       />

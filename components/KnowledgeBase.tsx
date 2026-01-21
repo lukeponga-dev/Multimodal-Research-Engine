@@ -11,7 +11,7 @@ interface KnowledgeBaseProps {
   isOpen?: boolean;
   onClose?: () => void;
   onClearHistory: () => void;
-  onClearAll: () => void;
+  onClearMemory: () => void;
   onExportSession: () => void;
   onOpenDocs: () => void;
 }
@@ -25,7 +25,7 @@ export default function KnowledgeBase({
   isOpen = false,
   onClose,
   onClearHistory,
-  onClearAll,
+  onClearMemory,
   onExportSession,
   onOpenDocs
 }: KnowledgeBaseProps) {
@@ -73,8 +73,8 @@ export default function KnowledgeBase({
     if (window.innerWidth < 768 && onClose) onClose();
   };
 
-  const handleClearAllAction = () => {
-    onClearAll();
+  const handleClearMemoryAction = () => {
+    onClearMemory();
     if (window.innerWidth < 768 && onClose) onClose();
   };
 
@@ -128,9 +128,9 @@ export default function KnowledgeBase({
               <i className="fa-solid fa-message text-slate-400 group-hover:text-red-500 transition-colors"></i>
               <span className="text-[9px] font-bold text-slate-600 dark:text-zinc-400 group-hover:text-red-600 dark:group-hover:text-red-400 uppercase tracking-wider text-center">Clear Chat</span>
             </button>
-            <button type="button" onClick={handleClearAllAction} className="flex flex-col items-center justify-center p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-red-400 dark:hover:border-red-900 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all group border-b-2 border-red-100 dark:border-red-900/20">
+            <button type="button" onClick={handleClearMemoryAction} className="flex flex-col items-center justify-center p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-red-400 dark:hover:border-red-900 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all group border-b-2 border-red-100 dark:border-red-900/20">
               <i className="fa-solid fa-trash-can text-slate-400 group-hover:text-red-600 transition-colors"></i>
-              <span className="text-[9px] font-bold text-slate-600 dark:text-zinc-400 group-hover:text-red-600 dark:group-hover:text-red-400 uppercase tracking-wider text-center">Clear All</span>
+              <span className="text-[9px] font-bold text-slate-600 dark:text-zinc-400 group-hover:text-red-600 dark:group-hover:text-red-400 uppercase tracking-wider text-center">Clear Memory</span>
             </button>
           </div></div>
         </div>
