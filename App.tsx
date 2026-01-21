@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import KnowledgeBase from './components/KnowledgeBase.tsx';
 import ChatInterface from './components/ChatInterface.tsx';
@@ -20,7 +19,8 @@ export default function App() {
 
   const [selectedModel, setSelectedModel] = useState<ModelType>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.MODEL);
-    return (saved as ModelType) || 'gemini-3-flash-preview';
+    // Default to 'gemini-3-pro-preview' as the primary model for research tasks
+    return (saved as ModelType) || 'gemini-3-pro-preview';
   });
 
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
