@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import KnowledgeBase from './components/KnowledgeBase.tsx';
-import ChatInterface from './components/ChatInterface.tsx';
-import DocsModal from './components/DocsModal.tsx';
-import { DocumentItem, ChatMessage, AppStatus, ModelType, ChatAttachment } from './types.ts';
-import { performResearch } from './geminiService.ts';
-import { db } from './db.ts';
+import KnowledgeBase from './components/KnowledgeBase';
+import ChatInterface from './components/ChatInterface';
+import DocsModal from './components/DocsModal';
+import { DocumentItem, ChatMessage, AppStatus, ModelType, ChatAttachment } from './types';
+import { performResearch } from './geminiService';
+import { db } from './db';
 
 const STORAGE_KEYS = {
   THEME: 'nexus_theme_v1',
@@ -19,7 +19,6 @@ export default function App() {
 
   const [selectedModel, setSelectedModel] = useState<ModelType>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.MODEL);
-    // Default to 'gemini-3-pro-preview' as the primary model for research tasks
     return (saved as ModelType) || 'gemini-3-pro-preview';
   });
 
@@ -86,7 +85,6 @@ export default function App() {
         type: 'image',
         mimeType: 'image/png',
         timestamp: Date.now(),
-        // Placeholder for the chart image based on visual description
         content: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAABkCAIAAAAm1uV2AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH5gMWEw0sYp2S/gAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAAJElEQVR42u3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAPbwb+AABjm213AAAAABJRU5ErkJggg=='
       },
       {
@@ -95,7 +93,6 @@ export default function App() {
         type: 'image',
         mimeType: 'image/png',
         timestamp: Date.now(),
-        // Placeholder for the protocol screenshot
         content: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAADIAQMAAAAwS4omAAAAA1BMVEX///+nxBvIAAAANElEQVRIie3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeALWLAABq15NlAAAAABJRU5ErkJggg=='
       },
       {
@@ -148,40 +145,10 @@ visual evidence.`
 "recall,84.1"
 "p95_latency_ms,131"
 "error_variance,0.047"`
-      },
-      {
-        id: 'demo-run3',
-        name: 'experimental_run_3.csv',
-        type: 'text',
-        timestamp: Date.now(),
-        content: `"metric,value"
-"accuracy,89.2"
-"precision,88.5"
-"recall,86.9"
-"p95_latency_ms,118"
-"error_variance,0.015"`
-      },
-      {
-        id: 'demo-notes',
-        name: 'research_team_notes.md',
-        type: 'markdown',
-        timestamp: Date.now(),
-        content: `# Weekly Research Sync - Team Alpha
-
-## Observations
-- Run 1 showed promise but high latency instability.
-- Run 2 improved accuracy significantly but breached the 120ms p95 latency constraint (131ms).
-- We need to investigate if the variance spike in Run 2 is due to the new attention mechanism or just noise.
-- Run 3 optimization target: maintain Run 2 accuracy while clipping latency tails.
-
-## Hypotheses
-- The latency regression is likely in the decoding block.
-- Quantization might help, but we risk accuracy drop.`
       }
     ];
 
     try {
-      // Filter out duplicates based on ID to avoid errors if clicked multiple times
       const newDocs = demoDocs.filter(demo => !documents.some(d => d.id === demo.id));
       if (newDocs.length === 0) {
         alert("Demo data is already loaded.");
@@ -197,7 +164,6 @@ visual evidence.`
   };
 
   const handleClearHistory = async () => {
-    // Immediate clear for "Start Fresh" / "New Chat" experience
     try {
       await db.clearMessages();
       setMessages([]);
@@ -328,8 +294,6 @@ visual evidence.`
       db.addMessage(aiMsg).catch(console.error);
       setStatus(AppStatus.IDLE);
 
-      // Auto-speak logic is now handled in ChatInterface via useEffect
-
     } catch (error) {
       console.error("Research Error:", error);
       const errorMsg: ChatMessage = {
@@ -369,7 +333,7 @@ visual evidence.`
 
   if (isInitializing) {
     return (
-       <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-zinc-950">
+       <div className="flex h-[100dvh] w-full items-center justify-center bg-slate-50 dark:bg-zinc-950">
           <div className="flex flex-col items-center gap-4">
              <div className="w-12 h-12 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
              <p className="text-slate-400 dark:text-zinc-500 text-xs font-bold uppercase tracking-widest animate-pulse">Initializing Nexus Memory...</p>
@@ -380,7 +344,7 @@ visual evidence.`
 
   if (initError) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-zinc-950 p-6">
+      <div className="flex h-[100dvh] w-full items-center justify-center bg-slate-50 dark:bg-zinc-950 p-6">
         <div className="max-w-md w-full bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-2xl border border-slate-200 dark:border-zinc-800 text-center animate-in fade-in zoom-in duration-300">
            <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
               <i className="fa-solid fa-triangle-exclamation text-red-500 text-3xl"></i>
@@ -409,7 +373,7 @@ visual evidence.`
   }
 
   return (
-    <div className={`flex h-screen w-full overflow-hidden transition-colors duration-300 ${isDarkMode ? 'dark bg-zinc-950' : 'bg-white'}`}>
+    <div className={`flex h-[100dvh] w-full overflow-hidden transition-colors duration-300 ${isDarkMode ? 'dark bg-zinc-950' : 'bg-white'}`}>
       <DocsModal isOpen={isDocsOpen} onClose={() => setIsDocsOpen(false)} />
       {isSidebarOpen && (
         <div 

@@ -95,24 +95,25 @@ export const performResearch = async (
     let base64Data = '';
 
     // Robustly extract base64 and mimeType from Data URL
-    if (img.content.includes(',')) {
-      const parts = img.content.split(',');
-      base64Data = parts[1];
+    // We use indexOf(',') because split(',') can break if data contains commas
+    const commaIndex = img.content.indexOf(',');
+    
+    if (commaIndex !== -1) {
+      base64Data = img.content.slice(commaIndex + 1);
       
       // Attempt to extract accurate mimeType from the header (e.g., data:image/png;base64)
-      // This fixes issues where IDB stored items might have undefined mimeTypes but the data URL is correct
-      const header = parts[0];
+      const header = img.content.slice(0, commaIndex);
       const match = header.match(/data:([^;]+);base64/);
       if (match && match[1]) {
         mimeType = match[1];
       }
     } else {
-      // Fallback for raw base64 strings (though app uses Data URLs)
+      // Fallback for raw base64 strings
       base64Data = img.content;
     }
 
-    // Clean whitespace
-    base64Data = base64Data.trim();
+    // CRITICAL: Clean any whitespace/newlines that might cause API errors
+    base64Data = base64Data.replace(/[\r\n\s]+/g, '');
 
     if (base64Data) {
       currentParts.push({
@@ -132,10 +133,12 @@ export const performResearch = async (
   // 4. Add Immediate Attachments (Snapshots/Live Vision)
   currentAttachments.forEach(att => {
     if (att.data) {
+        // Clean attachment data as well
+        const cleanData = att.data.replace(/[\r\n\s]+/g, '');
         currentParts.push({
         inlineData: {
             mimeType: att.mimeType,
-            data: att.data
+            data: cleanData
         }
         });
     }
@@ -143,7 +146,6 @@ export const performResearch = async (
 
   // Ensure current message has content
   if (currentParts.length === 0) {
-    // Should generally not happen if ChatInterface checks input
     currentParts.push({ text: "Analyze the current context." });
   }
 
