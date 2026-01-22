@@ -519,6 +519,20 @@ export default function ChatInterface({
       {isCameraOpen && (
         <div className="absolute inset-0 z-40 bg-black flex flex-col items-center justify-center animate-in fade-in duration-300">
           <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+          
+          <div className="absolute top-12 left-0 right-0 flex justify-center pointer-events-none">
+            <div className="bg-slate-900/80 backdrop-blur-md border border-white/10 px-6 py-3 rounded-2xl flex flex-col items-center gap-1 shadow-2xl">
+              <span className="text-white font-medium text-sm flex items-center gap-2">
+                <i className="fa-solid fa-crop-simple text-indigo-400"></i> Center subject in view
+              </span>
+              <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
+                <span className="flex items-center gap-1"><i className="fa-regular fa-circle-dot text-white"></i> Capture</span>
+                <span className="w-1 h-1 rounded-full bg-slate-600"></span>
+                <span className="flex items-center gap-1"><i className="fa-solid fa-xmark text-white"></i> Close</span>
+              </div>
+            </div>
+          </div>
+
           <div className="absolute bottom-10 left-0 right-0 flex justify-center items-center gap-8">
             <button 
               onClick={stopCamera} 
