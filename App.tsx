@@ -1,10 +1,10 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import KnowledgeBase from './components/KnowledgeBase.tsx';
-import ChatInterface from './components/ChatInterface.tsx';
-import DocsModal from './components/DocsModal.tsx';
-import { DocumentItem, ChatMessage, AppStatus, ModelType, ChatAttachment } from './types.ts';
-import { performResearch } from './geminiService.ts';
-import { db } from './db.ts';
+import React, { useState, useCallback, useEffect } from 'react';
+import KnowledgeBase from './components/KnowledgeBase';
+import ChatInterface from './components/ChatInterface';
+import DocsModal from './components/DocsModal';
+import { DocumentItem, ChatMessage, AppStatus, ModelType, ChatAttachment } from './types';
+import { performResearch } from './geminiService';
+import { db } from './db';
 
 const STORAGE_KEYS = {
   THEME: 'nexus_theme_v1',
@@ -19,7 +19,6 @@ export default function App() {
 
   const [selectedModel, setSelectedModel] = useState<ModelType>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.MODEL);
-    // Default to 'gemini-3-pro-preview' as the primary model for research tasks
     return (saved as ModelType) || 'gemini-3-pro-preview';
   });
 
@@ -86,7 +85,6 @@ export default function App() {
         type: 'image',
         mimeType: 'image/png',
         timestamp: Date.now(),
-        // Placeholder for the chart image based on visual description
         content: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAABkCAIAAAAm1uV2AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH5gMWEw0sYp2S/gAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAAJElEQVR42u3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAPbwb+AABjm213AAAAABJRU5ErkJggg=='
       },
       {
@@ -95,7 +93,6 @@ export default function App() {
         type: 'image',
         mimeType: 'image/png',
         timestamp: Date.now(),
-        // Placeholder for the protocol screenshot
         content: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAADIAQMAAAAwS4omAAAAA1BMVEX///+nxBvIAAAANElEQVRIie3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeALWLAABq15NlAAAAABJRU5ErkJggg=='
       },
       {
@@ -152,7 +149,6 @@ visual evidence.`
     ];
 
     try {
-      // Filter out duplicates based on ID to avoid errors if clicked multiple times
       const newDocs = demoDocs.filter(demo => !documents.some(d => d.id === demo.id));
       if (newDocs.length === 0) {
         alert("Demo data is already loaded.");
@@ -168,7 +164,6 @@ visual evidence.`
   };
 
   const handleClearHistory = async () => {
-    // Immediate clear for "Start Fresh" / "New Chat" experience
     try {
       await db.clearMessages();
       setMessages([]);
@@ -299,8 +294,6 @@ visual evidence.`
       db.addMessage(aiMsg).catch(console.error);
       setStatus(AppStatus.IDLE);
 
-      // Auto-speak logic is now handled in ChatInterface via useEffect
-
     } catch (error) {
       console.error("Research Error:", error);
       const errorMsg: ChatMessage = {
@@ -325,6 +318,18 @@ visual evidence.`
     
     handleSendMessage(comparePrompt);
   }, [handleSendMessage]);
+
+  const handleSynthesizeAll = useCallback(async () => {
+    if (documents.length === 0) return;
+    
+    const count = documents.length;
+    const synthesizePrompt = `Analyze the entire knowledge base containing ${count} items. 
+    Perform a high-level synthesis of all data currently in memory. 
+    Identify the overarching themes, connect related data points across different documents, and provide a unified executive summary of the research context.
+    If there are experimental results, summarize the aggregate findings.`;
+
+    handleSendMessage(synthesizePrompt);
+  }, [documents, handleSendMessage]);
 
   if (isInitializing) {
     return (
@@ -381,6 +386,7 @@ visual evidence.`
         onAddDocument={handleAddDocument} 
         onRemoveDocument={handleRemoveDocument} 
         onCompareDocuments={handleCompareDocuments}
+        onSynthesizeAll={handleSynthesizeAll}
         onLoadDemoData={handleLoadDemoData}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
