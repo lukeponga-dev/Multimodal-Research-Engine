@@ -6,6 +6,7 @@ interface KnowledgeBaseProps {
   onAddDocument: (doc: DocumentItem) => void;
   onRemoveDocument: (id: string) => void;
   onCompareDocuments: (docs: DocumentItem[]) => void;
+  onLoadDemoData: () => void;
   isOpen?: boolean;
   onClose?: () => void;
   onClearHistory: () => void;
@@ -19,6 +20,7 @@ export default function KnowledgeBase({
   onAddDocument, 
   onRemoveDocument,
   onCompareDocuments,
+  onLoadDemoData,
   isOpen = false,
   onClose,
   onClearHistory,
@@ -75,6 +77,11 @@ export default function KnowledgeBase({
     if (window.innerWidth < 768 && onClose) onClose();
   };
 
+  const handleLoadDemo = () => {
+    onLoadDemoData();
+    if (window.innerWidth < 768 && onClose) onClose();
+  };
+
   return (
     <div className={`fixed md:relative inset-y-0 left-0 z-50 w-80 bg-white dark:bg-zinc-950 border-r border-slate-200 dark:border-zinc-800 transform transition-transform duration-300 ease-in-out flex flex-col h-full ${isOpen ? 'translate-x-0 shadow-2xl md:shadow-none' : '-translate-x-full md:translate-x-0'}`}>
       <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-slate-50/50 dark:bg-zinc-900/50">
@@ -100,6 +107,12 @@ export default function KnowledgeBase({
             <div className="text-center py-10 flex flex-col items-center">
                 <i className="fa-solid fa-database text-slate-200 dark:text-zinc-800 text-4xl mb-3"></i>
                 <p className="text-[10px] text-slate-400 dark:text-zinc-600 font-bold uppercase tracking-widest mb-4">Memory Idle</p>
+                <button 
+                  onClick={handleLoadDemo} 
+                  className="px-4 py-2 bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-800 hover:text-indigo-500 dark:hover:text-indigo-400 transition-all shadow-sm"
+                >
+                  Load Demo Data
+                </button>
             </div>
         )}
       </div>

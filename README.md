@@ -3,6 +3,16 @@
 
 Nexus is a high-performance, multimodal research agent built with React 19, TypeScript, and the Google Gemini 3 API. It is designed to synthesize large datasets, reason deeply over complex problems, and provide real-time information via Google Search grounding.
 
+## 🏛️ Core Architecture
+
+Nexus Research is built around the **Gemini 3 API** as its core reasoning and synthesis engine. Gemini 3 is not used as a peripheral chatbot layer; it functions as the system’s primary cognitive substrate. All major capabilities—context persistence, cross-domain reasoning, and multimodal synthesis—flow directly through Gemini 3.
+
+The application leverages **Gemini 3 Deep Reasoning** to maintain long-horizon continuity across evolving inputs, including documents, datasets, logs, and images. Instead of treating each interaction as an isolated prompt, Gemini 3 operates over a dynamically weighted context stream. This enables the system to compare experimental runs, identify regressions or improvements, and explain causal relationships without requiring users to restate prior context.
+
+**Gemini 3’s multimodal capabilities** are central to the experience. Text, structured data (CSV), PDFs, and visual artifacts are fused into a single reasoning loop, allowing the same agent to transition seamlessly between scientific analysis and software debugging through automatic mode adaptation.
+
+The project also utilizes **low latency Gemini 3 synthesis paths (“Flash mode”)** to support rapid iteration while preserving coherence, demonstrating that speed and depth are not mutually exclusive.
+
 ## 🚀 Key Features
 
 ### 🧠 Dual Intelligence Models

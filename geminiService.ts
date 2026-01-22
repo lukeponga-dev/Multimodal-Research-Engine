@@ -91,16 +91,36 @@ export const performResearch = async (
   // 2. Add Memory Images (Long term)
   const memoryImages = memory.filter(doc => doc.type === 'image');
   memoryImages.forEach(img => {
+    let mimeType = img.mimeType;
+    let base64Data = '';
+
+    // Robustly extract base64 and mimeType from Data URL
     if (img.content.includes(',')) {
-      const base64Data = img.content.split(',')[1];
-      if (base64Data) {
-        currentParts.push({
-            inlineData: {
-            mimeType: img.mimeType || 'image/jpeg',
-            data: base64Data
-            }
-        });
+      const parts = img.content.split(',');
+      base64Data = parts[1];
+      
+      // Attempt to extract accurate mimeType from the header (e.g., data:image/png;base64)
+      // This fixes issues where IDB stored items might have undefined mimeTypes but the data URL is correct
+      const header = parts[0];
+      const match = header.match(/data:([^;]+);base64/);
+      if (match && match[1]) {
+        mimeType = match[1];
       }
+    } else {
+      // Fallback for raw base64 strings (though app uses Data URLs)
+      base64Data = img.content;
+    }
+
+    // Clean whitespace
+    base64Data = base64Data.trim();
+
+    if (base64Data) {
+      currentParts.push({
+          inlineData: {
+          mimeType: mimeType || 'image/jpeg', // Fallback only if extraction failed and prop missing
+          data: base64Data
+          }
+      });
     }
   });
 

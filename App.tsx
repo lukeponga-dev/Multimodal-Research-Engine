@@ -78,6 +78,95 @@ export default function App() {
     setDocuments(prev => prev.filter(d => d.id !== id));
   };
 
+  const handleLoadDemoData = async () => {
+    const demoDocs: DocumentItem[] = [
+      {
+        id: 'demo-chart',
+        name: 'accuracy_latency_chart.png',
+        type: 'image',
+        mimeType: 'image/png',
+        timestamp: Date.now(),
+        // Placeholder for the chart image based on visual description
+        content: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAABkCAIAAAAm1uV2AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH5gMWEw0sYp2S/gAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAAJElEQVR42u3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAPbwb+AABjm213AAAAABJRU5ErkJggg=='
+      },
+      {
+        id: 'demo-protocol-visual',
+        name: 'protocol_page_1.png',
+        type: 'image',
+        mimeType: 'image/png',
+        timestamp: Date.now(),
+        // Placeholder for the protocol screenshot
+        content: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAADIAQMAAAAwS4omAAAAA1BMVEX///+nxBvIAAAANElEQVRIie3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeALWLAABq15NlAAAAABJRU5ErkJggg=='
+      },
+      {
+        id: 'demo-protocol-ocr',
+        name: 'protocol_page_1_ocr.txt',
+        type: 'text',
+        timestamp: Date.now(),
+        content: `Protocol: Adaptive Model Evaluation Under Latency Constraints
+Abstract
+This protocol evaluates model performance across repeated experimental runs under 
+fixed compute and latency constraints. Primary objectives include accuracy improvement, 
+latency stability, and variance reduction across batches.
+Constraints
+- Batch size fixed at 32
+- Maximum allowable p95 latency: 120 ms
+- Dataset held constant across runs
+- No architectural changes between runs; only parameter tuning permitted
+Metrics Tracked
+- Accuracy (%)
+- Precision
+- Recall
+- p95 Latency (ms)
+- Error variance across batches
+Evaluation Notes
+Improvements in accuracy must not introduce latency regressions beyond the specified 
+threshold. Variance spikes should be treated as instability indicators even if mean 
+accuracy improves. Any recommendation must be justified using both quantitative and 
+visual evidence.`
+      },
+      {
+        id: 'demo-run1',
+        name: 'experimental_run_1.csv',
+        type: 'text',
+        timestamp: Date.now(),
+        content: `"metric,value"
+"accuracy,82.4"
+"precision,80.1"
+"recall,78.9"
+"p95_latency_ms,94"
+"error_variance,0.021"`
+      },
+      {
+        id: 'demo-run2',
+        name: 'experimental_run_2.csv',
+        type: 'text',
+        timestamp: Date.now(),
+        content: `"metric,value"
+"accuracy,87.6"
+"precision,85.9"
+"recall,84.1"
+"p95_latency_ms,131"
+"error_variance,0.047"`
+      }
+    ];
+
+    try {
+      // Filter out duplicates based on ID to avoid errors if clicked multiple times
+      const newDocs = demoDocs.filter(demo => !documents.some(d => d.id === demo.id));
+      if (newDocs.length === 0) {
+        alert("Demo data is already loaded.");
+        return;
+      }
+      
+      await Promise.all(newDocs.map(doc => db.addDocument(doc)));
+      setDocuments(prev => [...prev, ...newDocs]);
+    } catch (e) {
+      console.error("Failed to load demo data", e);
+      alert("Failed to load demo data.");
+    }
+  };
+
   const handleClearHistory = async () => {
     // Immediate clear for "Start Fresh" / "New Chat" experience
     try {
@@ -292,6 +381,7 @@ export default function App() {
         onAddDocument={handleAddDocument} 
         onRemoveDocument={handleRemoveDocument} 
         onCompareDocuments={handleCompareDocuments}
+        onLoadDemoData={handleLoadDemoData}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         onClearHistory={handleClearHistory}

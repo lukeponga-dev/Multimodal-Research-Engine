@@ -142,6 +142,27 @@ export default function DocsModal({ isOpen, onClose }: DocsModalProps) {
 
           {activeTab === 'architecture' && (
             <div className="space-y-10 animate-in slide-in-from-right-4 duration-300">
+               
+               <section>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-zinc-100 mb-4 flex items-center gap-2">
+                  <i className="fa-solid fa-dna text-indigo-500"></i> Cognitive Substrate
+                </h3>
+                <div className="text-xs md:text-sm text-slate-600 dark:text-zinc-400 leading-relaxed space-y-4 p-5 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-2xl border border-indigo-100 dark:border-indigo-900/20">
+                  <p>
+                    Nexus Research is built around the <strong>Gemini 3 API</strong> as its core reasoning and synthesis engine. Gemini 3 is not used as a peripheral chatbot layer; it functions as the system’s primary cognitive substrate. All major capabilities—context persistence, cross-domain reasoning, and multimodal synthesis—flow directly through Gemini 3.
+                  </p>
+                  <p>
+                    The application leverages <strong>Gemini 3 Deep Reasoning</strong> to maintain long-horizon continuity across evolving inputs, including documents, datasets, logs, and images. Instead of treating each interaction as an isolated prompt, Gemini 3 operates over a dynamically weighted context stream. This enables the system to compare experimental runs, identify regressions or improvements, and explain causal relationships without requiring users to restate prior context.
+                  </p>
+                  <p>
+                    <strong>Gemini 3’s multimodal capabilities</strong> are central to the experience. Text, structured data (CSV), PDFs, and visual artifacts are fused into a single reasoning loop, allowing the same agent to transition seamlessly between scientific analysis and software debugging through automatic mode adaptation.
+                  </p>
+                  <p>
+                     The project also utilizes <strong>low latency Gemini 3 synthesis paths (“Flash mode”)</strong> to support rapid iteration while preserving coherence, demonstrating that speed and depth are not mutually exclusive.
+                  </p>
+                </div>
+               </section>
+
                <section>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-zinc-100 mb-4 flex items-center gap-2">
                   <i className="fa-solid fa-layer-group text-indigo-500"></i> Technical Stack
