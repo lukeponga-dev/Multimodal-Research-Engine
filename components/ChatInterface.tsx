@@ -439,12 +439,12 @@ export default function ChatInterface({
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-zinc-950 relative min-w-0 w-full transition-colors duration-300">
       {/* Header */}
-      <div className="h-16 border-b border-slate-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md flex items-center justify-between px-4 md:px-6 shadow-sm z-10 transition-colors">
+      <div className="h-16 border-b border-slate-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md flex items-center justify-between px-3 md:px-6 shadow-sm z-10 transition-colors shrink-0">
         {showChatSearch ? (
-            <div className="flex-1 flex items-center animate-in fade-in slide-in-from-left-2 duration-200 mr-2 md:mr-4">
+            <div className="flex-1 flex items-center animate-in fade-in slide-in-from-left-2 duration-200 mr-2">
                 <div className="relative w-full max-w-lg">
                     <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <input autoFocus value={chatSearchTerm} onChange={(e) => setChatSearchTerm(e.target.value)} placeholder="Search conversation..." className="w-full bg-slate-100 dark:bg-zinc-800/50 text-slate-800 dark:text-zinc-100 text-sm rounded-xl py-2 pl-9 pr-9 border border-slate-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all placeholder:text-slate-400" />
+                    <input autoFocus value={chatSearchTerm} onChange={(e) => setChatSearchTerm(e.target.value)} placeholder="Search..." className="w-full bg-slate-100 dark:bg-zinc-800/50 text-slate-800 dark:text-zinc-100 text-base md:text-sm rounded-xl py-2 pl-9 pr-9 border border-slate-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all placeholder:text-slate-400" />
                     {chatSearchTerm && (
                         <button onClick={() => setChatSearchTerm('')} className="absolute right-9 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300">
                              <i className="fa-solid fa-circle-xmark text-xs"></i>
@@ -456,43 +456,43 @@ export default function ChatInterface({
                 </div>
             </div>
         ) : (
-            <div className="flex items-center gap-3 animate-in fade-in duration-200">
-              <button onClick={onToggleSidebar} className="md:hidden w-10 h-10 flex items-center justify-center text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg"><i className="fa-solid fa-brain"></i></button>
-              <div className={`hidden sm:flex w-9 h-9 md:w-10 md:h-10 rounded-xl items-center justify-center text-white shadow-lg transition-all ${isPro ? 'bg-indigo-600 shadow-indigo-200 dark:shadow-indigo-900/20' : 'bg-emerald-500 shadow-emerald-200 dark:shadow-emerald-900/20'}`}><i className={`fa-solid ${isPro ? 'fa-microchip' : 'fa-bolt-lightning'} text-lg`}></i></div>
+            <div className="flex items-center gap-2 md:gap-3 animate-in fade-in duration-200 min-w-0">
+              <button onClick={onToggleSidebar} className="md:hidden w-9 h-9 flex items-center justify-center text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg shrink-0"><i className="fa-solid fa-brain"></i></button>
+              <div className={`hidden sm:flex w-9 h-9 md:w-10 md:h-10 rounded-xl items-center justify-center text-white shadow-lg transition-all shrink-0 ${isPro ? 'bg-indigo-600 shadow-indigo-200 dark:shadow-indigo-900/20' : 'bg-emerald-500 shadow-emerald-200 dark:shadow-emerald-900/20'}`}><i className={`fa-solid ${isPro ? 'fa-microchip' : 'fa-bolt-lightning'} text-lg`}></i></div>
               <div className="overflow-hidden">
                 <div className="flex items-baseline gap-2"><h1 className="font-bold text-slate-800 dark:text-zinc-100 text-sm md:text-lg leading-tight truncate">Nexus {isPro ? 'Pro' : 'Flash'}</h1><span className="hidden lg:inline text-[9px] text-slate-400 font-bold uppercase tracking-widest border-l border-slate-200 dark:border-zinc-700 pl-2">Infinite Context</span></div>
-                <p className="text-[8px] md:text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider truncate">{isPro ? 'Deep Thinking Intelligence' : 'High Speed Synthesis'}</p>
+                <p className="hidden md:block text-[8px] md:text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider truncate">{isPro ? 'Deep Thinking Intelligence' : 'High Speed Synthesis'}</p>
               </div>
             </div>
         )}
-        <div className="flex items-center gap-1 md:gap-3">
+        <div className="flex items-center gap-1 md:gap-3 shrink-0">
           {!showChatSearch && (
               <button onClick={() => setShowChatSearch(true)} className="w-9 h-9 flex items-center justify-center text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors" title="Search Chat History"><i className="fa-solid fa-magnifying-glass"></i></button>
           )}
           <div className="relative group flex items-center">
-            <select value={selectedModel} onChange={(e) => onModelChange(e.target.value as ModelType)} className="appearance-none bg-slate-100 dark:bg-zinc-800 text-[10px] md:text-xs font-bold text-slate-700 dark:text-zinc-300 px-3 md:px-4 py-1.5 pr-8 rounded-full border border-slate-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 cursor-pointer hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all uppercase tracking-tight">
-              <option value="gemini-3-pro-preview">Pro (Deep)</option>
-              <option value="gemini-3-flash-preview">Flash (Fast)</option>
+            <select value={selectedModel} onChange={(e) => onModelChange(e.target.value as ModelType)} className="appearance-none bg-slate-100 dark:bg-zinc-800 text-[10px] md:text-xs font-bold text-slate-700 dark:text-zinc-300 px-3 md:px-4 py-1.5 pr-8 rounded-full border border-slate-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 cursor-pointer hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all uppercase tracking-tight max-w-[100px] md:max-w-none truncate">
+              <option value="gemini-3-pro-preview">Pro</option>
+              <option value="gemini-3-flash-preview">Flash</option>
             </select>
             <i className="fa-solid fa-chevron-down absolute right-3 text-[8px] text-slate-400 pointer-events-none"></i>
           </div>
           
           <div className="flex items-center gap-1">
             {isSpeaking && (
-                <div className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800 rounded-full px-2 py-1 border border-slate-200 dark:border-zinc-700 animate-in fade-in zoom-in duration-200 mr-2">
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800 rounded-full px-1 py-0.5 md:px-2 md:py-1 border border-slate-200 dark:border-zinc-700 animate-in fade-in zoom-in duration-200 mr-1 md:mr-2">
                     <button
                         onClick={isPaused ? resumeSpeech : pauseSpeech}
-                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 transition-colors"
+                        className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 transition-colors"
                         title={isPaused ? "Resume" : "Pause"}
                     >
-                        <i className={`fa-solid ${isPaused ? 'fa-play' : 'fa-pause'}`}></i>
+                        <i className={`fa-solid ${isPaused ? 'fa-play' : 'fa-pause'} text-xs md:text-sm`}></i>
                     </button>
                     <button
                         onClick={stopSpeech}
-                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 hover:text-red-600 transition-colors"
+                        className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 hover:text-red-600 transition-colors"
                         title="Stop"
                     >
-                        <i className="fa-solid fa-stop"></i>
+                        <i className="fa-solid fa-stop text-xs md:text-sm"></i>
                     </button>
                 </div>
             )}
@@ -505,9 +505,9 @@ export default function ChatInterface({
             </button>
           </div>
 
-          <button onClick={onToggleTheme} className="w-9 h-9 flex items-center justify-center text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors"><i className={`fa-solid ${isDarkMode ? 'fa-sun' : 'fa-moon'}`}></i></button>
-          <div className="flex items-center gap-2 bg-slate-100 dark:bg-zinc-800 rounded-full px-2 md:px-3 py-1 border border-slate-200 dark:border-zinc-700 shrink-0">
-            <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-tight ${useSearch ? 'text-green-600 dark:text-green-400' : 'text-slate-500 dark:text-zinc-500'}`}>Search</span>
+          <button onClick={onToggleTheme} className="hidden md:flex w-9 h-9 items-center justify-center text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors"><i className={`fa-solid ${isDarkMode ? 'fa-sun' : 'fa-moon'}`}></i></button>
+          <div className="flex items-center gap-1.5 md:gap-2 bg-slate-100 dark:bg-zinc-800 rounded-full px-2 md:px-3 py-1 border border-slate-200 dark:border-zinc-700 shrink-0">
+            <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-tight hidden sm:inline ${useSearch ? 'text-green-600 dark:text-green-400' : 'text-slate-500 dark:text-zinc-500'}`}>Search</span>
             <button onClick={() => setUseSearch(!useSearch)} className={`w-8 md:w-10 h-4 md:h-5 rounded-full relative transition-colors ${useSearch ? 'bg-green-500' : 'bg-slate-300 dark:bg-zinc-600'}`} title="Toggle Google Search Grounding">
               <div className={`absolute top-0.5 w-3 h-3 md:w-4 md:h-4 bg-white rounded-full transition-all ${useSearch ? 'left-[18px] md:left-[22px] shadow-sm' : 'left-0.5'}`}></div>
             </button>
@@ -520,7 +520,7 @@ export default function ChatInterface({
         <div className="absolute inset-0 z-40 bg-black flex flex-col items-center justify-center animate-in fade-in duration-300">
           <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
           
-          <div className="absolute top-12 left-0 right-0 flex justify-center pointer-events-none">
+          <div className="absolute top-16 left-0 right-0 flex justify-center pointer-events-none">
             <div className="bg-slate-900/80 backdrop-blur-md border border-white/10 px-6 py-3 rounded-2xl flex flex-col items-center gap-1 shadow-2xl">
               <span className="text-white font-medium text-sm flex items-center gap-2">
                 <i className="fa-solid fa-crop-simple text-indigo-400"></i> Center subject in view
@@ -533,7 +533,7 @@ export default function ChatInterface({
             </div>
           </div>
 
-          <div className="absolute bottom-10 left-0 right-0 flex justify-center items-center gap-8">
+          <div className="absolute bottom-16 md:bottom-10 left-0 right-0 flex justify-center items-center gap-8">
             <button 
               onClick={stopCamera} 
               className="w-14 h-14 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-full flex items-center justify-center transition-all"
@@ -554,7 +554,7 @@ export default function ChatInterface({
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-8 scroll-smooth">
+      <div className="flex-1 overflow-y-auto p-3 md:p-6 space-y-4 md:space-y-8 scroll-smooth">
         {messages.length === 0 && !isCameraOpen && (
           <div className="h-full flex flex-col items-center justify-center text-center max-w-md mx-auto px-4 animate-in fade-in zoom-in duration-500">
             <div className={`w-16 h-16 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl flex items-center justify-center mb-6 transition-all ${isPro ? 'shadow-indigo-500/10' : 'shadow-emerald-500/10'}`}><i className={`fa-solid ${isPro ? 'fa-atom' : 'fa-bolt'} ${isPro ? 'text-indigo-500' : 'text-emerald-500'} text-3xl animate-pulse`}></i></div>
@@ -658,7 +658,7 @@ export default function ChatInterface({
       </div>
 
       {/* Input Area */}
-      <div className="p-4 md:p-6 bg-white dark:bg-zinc-900 border-t border-slate-200 dark:border-zinc-800 relative z-20">
+      <div className="p-3 md:p-6 bg-white dark:bg-zinc-900 border-t border-slate-200 dark:border-zinc-800 relative z-20 shrink-0">
         <form onSubmit={handleSubmit} className="relative max-w-4xl mx-auto">
           {pendingSnapshot && (
             <div className="absolute -top-24 left-0 p-2 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-slate-200 dark:border-zinc-700 animate-in slide-in-from-bottom-4">
@@ -683,7 +683,7 @@ export default function ChatInterface({
                 }
               }}
               placeholder={isRecording ? "Listening..." : "Message Nexus..."}
-              className="flex-1 bg-transparent border-none focus:ring-0 text-slate-800 dark:text-zinc-100 placeholder:text-slate-400 py-3 max-h-32 min-h-[44px] resize-none text-sm md:text-base"
+              className="flex-1 bg-transparent border-none focus:ring-0 text-slate-800 dark:text-zinc-100 placeholder:text-slate-400 py-3 max-h-32 min-h-[44px] resize-none text-base md:text-base"
               rows={1}
               disabled={isRecording || status === AppStatus.LOADING}
             />
@@ -691,12 +691,12 @@ export default function ChatInterface({
             {isRecording ? (
                <div className="flex items-center gap-2 pr-2">
                  <canvas ref={canvasRef} width="60" height="30" className="rounded"></canvas>
-                 <button type="button" onPointerUp={stopRecording} onMouseUp={stopRecording} onTouchEnd={stopRecording} className="w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center animate-pulse shadow-lg shadow-red-500/30">
+                 <button type="button" onPointerUp={stopRecording} onMouseUp={stopRecording} onTouchEnd={stopRecording} className="w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center animate-pulse shadow-lg shadow-red-500/30 shrink-0">
                    <i className="fa-solid fa-stop"></i>
                  </button>
                </div>
             ) : (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0">
                    <button 
                       type="button" 
                       onPointerDown={startRecording} 
