@@ -39,10 +39,10 @@ export const performResearch = async (
   const modelNameLabel = isPro ? 'Pro' : 'Flash';
 
   const systemInstruction = `You are Nexus ${modelNameLabel}, a high-performance multimodal Research Agent powered by Gemini 3. 
-    You have access to visual inputs (camera snapshots) and audio inputs.
-    Analyze the provided text documents and images ${isPro ? 'with extreme depth and reasoning' : 'rapidly and accurately'}. 
+    You have access to visual inputs (camera snapshots), audio inputs, and various document types (PDF, CSV, MD).
+    Analyze the provided text documents, structured data (CSV), and visual/binary artifacts (Images, PDFs) ${isPro ? 'with extreme depth and reasoning' : 'rapidly and accurately'}. 
     If Google Search is enabled, use it to verify facts or find recent developments.
-    If images are provided, incorporate visual analysis into your response.
+    If images or PDFs are provided, incorporate visual analysis into your response.
     Be objective, precise, and cite sources when available.
     Use your thinking process to synthesize datasets into cohesive insights ${isPro ? 'utilizing your full reasoning capacity' : 'with minimal latency'}.`;
 
@@ -80,36 +80,35 @@ export const performResearch = async (
   // Build current prompt parts (multimodal)
   const currentParts: any[] = [];
 
-  // 1. Add Memory Documents (Text/JSON/Markdown)
-  const textDocs = memory.filter(doc => doc.type !== 'image');
+  // 1. Add Text-based Docs (Text, JSON, Markdown, CSV)
+  const textDocs = memory.filter(doc => ['text', 'json', 'markdown', 'csv'].includes(doc.type));
   textDocs.forEach(doc => {
       currentParts.push({
           text: `[KNOWLEDGE BASE DOCUMENT: ${doc.name} (${doc.type})]\n${doc.content}`
       });
   });
   
-  // 2. Add Memory Images (Long term)
-  const memoryImages = memory.filter(doc => doc.type === 'image');
-  memoryImages.forEach(img => {
-    let mimeType = img.mimeType;
+  // 2. Add Binary Docs (Images, PDFs)
+  const binaryDocs = memory.filter(doc => ['image', 'pdf'].includes(doc.type));
+  binaryDocs.forEach(doc => {
+    let mimeType = doc.mimeType;
     let base64Data = '';
 
     // Robustly extract base64 and mimeType from Data URL
-    // We use indexOf(',') because split(',') can break if data contains commas
-    const commaIndex = img.content.indexOf(',');
+    const commaIndex = doc.content.indexOf(',');
     
     if (commaIndex !== -1) {
-      base64Data = img.content.slice(commaIndex + 1);
+      base64Data = doc.content.slice(commaIndex + 1);
       
-      // Attempt to extract accurate mimeType from the header (e.g., data:image/png;base64)
-      const header = img.content.slice(0, commaIndex);
+      // Attempt to extract accurate mimeType from the header
+      const header = doc.content.slice(0, commaIndex);
       const match = header.match(/data:([^;]+);base64/);
       if (match && match[1]) {
         mimeType = match[1];
       }
     } else {
       // Fallback for raw base64 strings
-      base64Data = img.content;
+      base64Data = doc.content;
     }
 
     // CRITICAL: Clean any whitespace/newlines that might cause API errors
@@ -118,7 +117,7 @@ export const performResearch = async (
     if (base64Data) {
       currentParts.push({
           inlineData: {
-          mimeType: mimeType || 'image/jpeg', // Fallback only if extraction failed and prop missing
+          mimeType: mimeType || (doc.type === 'pdf' ? 'application/pdf' : 'image/jpeg'),
           data: base64Data
           }
       });

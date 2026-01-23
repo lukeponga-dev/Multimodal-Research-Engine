@@ -5,6 +5,7 @@ import DocsModal from './components/DocsModal';
 import { DocumentItem, ChatMessage, AppStatus, ModelType, ChatAttachment } from './types';
 import { performResearch } from './geminiService';
 import { db } from './db';
+import { DEMO_DOCUMENTS } from './demoData';
 
 const STORAGE_KEYS = {
   THEME: 'nexus_theme_v1',
@@ -78,80 +79,10 @@ export default function App() {
   };
 
   const handleLoadDemoData = async () => {
-    const demoDocs: DocumentItem[] = [
-      {
-        id: 'demo-chart',
-        name: 'accuracy_latency_chart.png',
-        type: 'image',
-        mimeType: 'image/png',
-        timestamp: Date.now(),
-        content: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAABkCAIAAAAm1uV2AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH5gMWEw0sYp2S/gAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAAJElEQVR42u3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAPbwb+AABjm213AAAAABJRU5ErkJggg=='
-      },
-      {
-        id: 'demo-protocol-visual',
-        name: 'protocol_page_1.png',
-        type: 'image',
-        mimeType: 'image/png',
-        timestamp: Date.now(),
-        content: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAADIAQMAAAAwS4omAAAAA1BMVEX///+nxBvIAAAANElEQVRIie3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeALWLAABq15NlAAAAABJRU5ErkJggg=='
-      },
-      {
-        id: 'demo-protocol-ocr',
-        name: 'protocol_page_1_ocr.txt',
-        type: 'text',
-        timestamp: Date.now(),
-        content: `Protocol: Adaptive Model Evaluation Under Latency Constraints
-Abstract
-This protocol evaluates model performance across repeated experimental runs under 
-fixed compute and latency constraints. Primary objectives include accuracy improvement, 
-latency stability, and variance reduction across batches.
-Constraints
-- Batch size fixed at 32
-- Maximum allowable p95 latency: 120 ms
-- Dataset held constant across runs
-- No architectural changes between runs; only parameter tuning permitted
-Metrics Tracked
-- Accuracy (%)
-- Precision
-- Recall
-- p95 Latency (ms)
-- Error variance across batches
-Evaluation Notes
-Improvements in accuracy must not introduce latency regressions beyond the specified 
-threshold. Variance spikes should be treated as instability indicators even if mean 
-accuracy improves. Any recommendation must be justified using both quantitative and 
-visual evidence.`
-      },
-      {
-        id: 'demo-run1',
-        name: 'experimental_run_1.csv',
-        type: 'text',
-        timestamp: Date.now(),
-        content: `"metric,value"
-"accuracy,82.4"
-"precision,80.1"
-"recall,78.9"
-"p95_latency_ms,94"
-"error_variance,0.021"`
-      },
-      {
-        id: 'demo-run2',
-        name: 'experimental_run_2.csv',
-        type: 'text',
-        timestamp: Date.now(),
-        content: `"metric,value"
-"accuracy,87.6"
-"precision,85.9"
-"recall,84.1"
-"p95_latency_ms,131"
-"error_variance,0.047"`
-      }
-    ];
-
     try {
-      const newDocs = demoDocs.filter(demo => !documents.some(d => d.id === demo.id));
+      const newDocs = DEMO_DOCUMENTS.filter(demo => !documents.some(d => d.id === demo.id));
       if (newDocs.length === 0) {
-        alert("Demo data is already loaded.");
+        alert("Demo artifacts are already in memory.");
         return;
       }
       
@@ -159,7 +90,7 @@ visual evidence.`
       setDocuments(prev => [...prev, ...newDocs]);
     } catch (e) {
       console.error("Failed to load demo data", e);
-      alert("Failed to load demo data.");
+      alert("Failed to load demo artifacts.");
     }
   };
 
@@ -214,10 +145,10 @@ visual evidence.`
     } else {
       documents.forEach(doc => {
         mdContent += `### 📄 ${doc.name} (${doc.type})\n`;
-        if (doc.type === 'image') {
-          mdContent += `*[Image data attached in memory]*\n\n`;
+        if (doc.type === 'image' || doc.type === 'pdf') {
+          mdContent += `*[Binary data attached in memory]*\n\n`;
         } else {
-          mdContent += `\`\`\`${doc.type === 'json' ? 'json' : 'text'}\n${doc.content.substring(0, 1000)}${doc.content.length > 1000 ? '...' : ''}\n\`\`\`\n\n`;
+          mdContent += `\`\`\`${doc.type === 'json' ? 'json' : doc.type === 'csv' ? 'csv' : 'text'}\n${doc.content.substring(0, 1000)}${doc.content.length > 1000 ? '...' : ''}\n\`\`\`\n\n`;
         }
       });
     }

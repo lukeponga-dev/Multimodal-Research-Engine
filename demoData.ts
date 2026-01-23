@@ -3,55 +3,67 @@ import { DocumentItem } from './types';
 
 export const DEMO_DOCUMENTS: DocumentItem[] = [
   {
-    id: 'demo-protocol-ocr',
-    name: 'experiment_protocol.md',
+    id: 'demo-protocol-v1',
+    name: 'experiment_protocol_v1.md',
     type: 'markdown',
     timestamp: Date.now(),
-    content: `# Protocol: Adaptive Model Evaluation
-## Constraints
+    content: `# Experiment Protocol v1.0
+
+## Objective
+Evaluate accuracy–latency tradeoffs under fixed architectural constraints while maintaining inference stability across batches.
+
+## Fixed Constraints
+- **Architecture:** Fixed (no structural changes)
 - **Batch Size:** 32
-- **Max p95 Latency:** 120ms (Hard Threshold)
-- **Dataset:** Constant across runs
+- **Latency Limit:** 120 ms (p95)
+- **Evaluation Dataset:** Identical across runs
 
-## Metrics Tracked
-- Accuracy, Precision, Recall
-- p95 Latency (ms)
-- Error Variance
+## Metrics
+- **Accuracy (%)**
+- **p95 Latency (ms)**
+- **Error Variance (σ² across batches)**
 
-## Evaluation Criteria
-Improvements in accuracy are invalid if p95 latency exceeds 120ms. Variance spikes (>0.04) indicate model instability.`
+## Experimental Runs
+Two experimental runs were conducted with identical constraints but different parameter tuning strategies.
+- **Run 1:** Baseline configuration optimized for stability.
+- **Run 2:** Aggressively tuned for accuracy.
+
+## Evaluation Artifacts
+- Quantitative results are provided in \`run_1_results.csv\` and \`run_2_results.csv\`
+- Visual comparison shown in Figure 1 (\`performance_comparison.png\`)
+
+## Figure References
+**Figure 1:** Accuracy vs Latency comparison between Run 1 and Run 2.
+Note: Run 2 violates the 120ms latency constraint (actual: 131ms) as indicated in visual plots.
+
+## Protocol Notes
+Any future run must:
+- Remain under the 120 ms latency threshold.
+- Use the same dataset and batch size.
+- Optimize only inference‑time parameters.`
   },
   {
-    id: 'demo-run1',
+    id: 'demo-run1-results',
     name: 'run_1_results.csv',
-    type: 'text',
+    type: 'csv',
     timestamp: Date.now(),
-    content: `"metric,value"
-"accuracy,82.4"
-"precision,80.1"
-"recall,78.9"
-"p95_latency_ms,94"
-"error_variance,0.021"`
+    content: `run_id,accuracy,latency_ms,error_variance
+run_1,82.4,94,0.021`
   },
   {
-    id: 'demo-run2',
+    id: 'demo-run2-results',
     name: 'run_2_results.csv',
-    type: 'text',
+    type: 'csv',
     timestamp: Date.now(),
-    content: `"metric,value"
-"accuracy,87.6"
-"precision,85.9"
-"recall,84.1"
-"p95_latency_ms,131"
-"error_variance,0.047"`
+    content: `run_id,accuracy,latency_ms,error_variance
+run_2,87.6,131,0.047`
   },
   {
-    id: 'demo-chart-analysis',
-    name: 'accuracy_latency_comparison.png',
+    id: 'demo-performance-chart',
+    name: 'performance_comparison.png',
     type: 'image',
     mimeType: 'image/png',
     timestamp: Date.now(),
-    // Base64 placeholder for the comparison chart
     content: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAABkCAIAAAAm1uV2AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH5gMWEw0sYp2S/gAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAAJElEQVR42u3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAPbwb+AABjm213AAAAABJRU5ErkJggg=='
   }
 ];

@@ -2,8 +2,8 @@
 export interface DocumentItem {
   id: string;
   name: string;
-  content: string; // Base64 for images, text for others
-  type: 'text' | 'json' | 'markdown' | 'image';
+  content: string; // Base64 for images/pdfs, text for others
+  type: 'text' | 'json' | 'markdown' | 'image' | 'pdf' | 'csv';
   mimeType?: string;
   timestamp: number;
 }
