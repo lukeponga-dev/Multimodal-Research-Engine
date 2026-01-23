@@ -211,10 +211,13 @@ export default function KnowledgeBase({
           {documents.map((doc) => (
             <div key={doc.id} className="flex flex-col gap-1">
               <div className={`group p-3 bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm hover:shadow-md transition-all flex items-center justify-between overflow-hidden ${previewId === doc.id ? 'border-indigo-400 bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}>
-                <div className="flex items-center gap-3 truncate pr-2 flex-1 cursor-pointer" onClick={() => doc.type === 'csv' && setPreviewId(previewId === doc.id ? null : doc.id)}>
+                <div 
+                  className="flex items-center gap-3 truncate pr-2 flex-1 cursor-pointer" 
+                  onClick={() => (doc.type === 'csv' || doc.type === 'pdf') && setPreviewId(previewId === doc.id ? null : doc.id)}
+                >
                   <i className={`fa-solid ${getIconClass(doc.type)} text-[12px]`}></i>
                   <p className="text-[11px] font-semibold text-slate-700 dark:text-zinc-300 truncate">{doc.name}</p>
-                  {doc.type === 'csv' && (
+                  {(doc.type === 'csv' || doc.type === 'pdf') && (
                     <span className="text-[8px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter">Preview</span>
                   )}
                 </div>
@@ -258,6 +261,23 @@ export default function KnowledgeBase({
                     </table>
                   </div>
                   <p className="text-[8px] text-slate-400 dark:text-zinc-500 mt-1.5 italic text-center">Showing first 5 rows • All data will be sent to Nexus</p>
+                </div>
+              )}
+
+              {/* PDF Preview */}
+              {previewId === doc.id && doc.type === 'pdf' && (
+                <div className="mx-1 mt-0.5 p-1 bg-slate-100 dark:bg-zinc-800/80 rounded-lg border border-slate-200 dark:border-zinc-700 shadow-inner animate-in slide-in-from-top-1 duration-200 overflow-hidden">
+                  <div className="flex justify-between items-center mb-1.5 px-1 pt-1">
+                    <span className="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">PDF Preview</span>
+                    <button onClick={() => setPreviewId(null)} className="text-[9px] text-indigo-500 hover:text-indigo-600 font-bold">Hide</button>
+                  </div>
+                  <div className="rounded border border-slate-300 dark:border-zinc-600 overflow-hidden bg-white h-[200px] relative">
+                    <iframe 
+                      src={doc.content} 
+                      className="w-full h-full border-none" 
+                      title={doc.name}
+                    />
+                  </div>
                 </div>
               )}
             </div>
