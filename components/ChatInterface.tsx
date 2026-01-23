@@ -37,16 +37,20 @@ const HighlightText = ({ text, term }: { text: string, term: string }) => {
   );
 };
 
-// Simple waveform animation for speaking state
+// Refined waveform animation for speaking state
 const SpeakingWaveform = ({ isPaused }: { isPaused: boolean }) => (
-  <div className="flex items-center gap-0.5 h-3">
-    {[1, 2, 3, 4].map((i) => (
+  <div className="flex items-center gap-0.5 h-3 ml-2">
+    {[1, 2, 3, 4, 5].map((i) => (
       <div
         key={i}
         className={`w-0.5 bg-indigo-500 rounded-full transition-all duration-300 ${
-          isPaused ? 'h-1 opacity-50' : 'animate-[bounce_0.6s_ease-in-out_infinite]'
+          isPaused ? 'h-1 opacity-40' : 'animate-[bounce_0.6s_ease-in-out_infinite]'
         }`}
-        style={{ animationDelay: `${i * 0.1}s`, height: isPaused ? '4px' : '100%' }}
+        style={{ 
+          animationDelay: `${i * 0.1}s`, 
+          height: isPaused ? '3px' : '100%',
+          opacity: isPaused ? 0.4 : 0.8 
+        }}
       />
     ))}
   </div>
@@ -108,23 +112,22 @@ export default function ChatInterface({
 
   // Audio Playback Control
   const stopSpeech = useCallback(async () => {
-    // If context is suspended, resume it before stopping to ensure clean state for next playback
     if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-        try {
-            await audioContextRef.current.resume();
-        } catch (e) {
-            console.error("Error resuming context during stop:", e);
-        }
+      try {
+        await audioContextRef.current.resume();
+      } catch (e) {
+        console.error("Error resuming context during stop:", e);
+      }
     }
 
     if (currentAudioSourceRef.current) {
-        try {
-            currentAudioSourceRef.current.stop();
-            currentAudioSourceRef.current.disconnect();
-        } catch (e) {
-            // ignore errors if already stopped
-        }
-        currentAudioSourceRef.current = null;
+      try {
+        currentAudioSourceRef.current.stop();
+        currentAudioSourceRef.current.disconnect();
+      } catch (e) {
+        // Source might already be stopped
+      }
+      currentAudioSourceRef.current = null;
     }
     setIsSpeaking(null);
     setIsPaused(false);
@@ -132,20 +135,20 @@ export default function ChatInterface({
 
   const pauseSpeech = useCallback(async () => {
     if (audioContextRef.current && audioContextRef.current.state === 'running') {
-        await audioContextRef.current.suspend();
-        setIsPaused(true);
+      await audioContextRef.current.suspend();
+      setIsPaused(true);
     }
   }, []);
 
   const resumeSpeech = useCallback(async () => {
     if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-        await audioContextRef.current.resume();
-        setIsPaused(false);
+      await audioContextRef.current.resume();
+      setIsPaused(false);
     }
   }, []);
 
   const handleSpeech = async (text: string, messageId: string) => {
-    // If the same message is already speaking, toggle pause/resume
+    // Toggle Pause/Resume if clicking the same message
     if (isSpeaking === messageId) {
       if (isPaused) {
         await resumeSpeech();
@@ -155,8 +158,9 @@ export default function ChatInterface({
       return;
     }
 
-    // Stop existing speech before starting new
+    // Stop current speech before starting new
     await stopSpeech(); 
+    
     setIsSpeaking(messageId);
     setIsPaused(false);
     
@@ -167,7 +171,6 @@ export default function ChatInterface({
       }
       const ctx = audioContextRef.current;
       
-      // Ensure context is running if it was previously suspended
       if (ctx.state === 'suspended') {
         await ctx.resume();
       }
@@ -177,17 +180,20 @@ export default function ChatInterface({
       source.buffer = audioBuffer;
       source.connect(ctx.destination);
       source.onended = () => {
-        // Only clear if this was the current message playing
-        if (lastReadMessageIdRef.current === messageId || isSpeaking === messageId) {
-            setIsSpeaking(null);
+        // Reset state only if this message is still the one active
+        setIsSpeaking(current => {
+          if (current === messageId) {
             setIsPaused(false);
             currentAudioSourceRef.current = null;
-        }
+            return null;
+          }
+          return current;
+        });
       };
       source.start();
       currentAudioSourceRef.current = source;
     } catch (error) {
-      console.error("TTS error:", error);
+      console.error("TTS generation error:", error);
       setIsSpeaking(null);
       setIsPaused(false);
     }
@@ -195,14 +201,12 @@ export default function ChatInterface({
 
   // Auto-speak Effect
   useEffect(() => {
-    // Prevent reading full history on load
     if (lastReadMessageIdRef.current === null && messages.length > 0) {
-        lastReadMessageIdRef.current = messages[messages.length - 1].id;
-        return;
+      lastReadMessageIdRef.current = messages[messages.length - 1].id;
+      return;
     }
     
     if (messages.length === 0) {
-      // If chat is cleared, stop any active speech and reset tracker
       stopSpeech();
       lastReadMessageIdRef.current = null;
       return;
@@ -210,14 +214,13 @@ export default function ChatInterface({
     
     const lastMsg = messages[messages.length - 1];
     
-    // Only process if it's a new message
     if (lastMsg.id !== lastReadMessageIdRef.current) {
-        lastReadMessageIdRef.current = lastMsg.id;
-        if (lastMsg.role === 'model' && autoSpeak) {
-            handleSpeech(lastMsg.text, lastMsg.id);
-        }
+      lastReadMessageIdRef.current = lastMsg.id;
+      if (lastMsg.role === 'model' && autoSpeak) {
+        handleSpeech(lastMsg.text, lastMsg.id);
+      }
     }
-  }, [messages, autoSpeak]);
+  }, [messages, autoSpeak, stopSpeech]);
 
   const displayedMessages = useMemo(() => {
     if (!chatSearchTerm.trim()) return messages;
@@ -403,7 +406,7 @@ export default function ChatInterface({
   const startRecording = async () => {
     if (isTranscribing || status === AppStatus.LOADING) return;
     try {
-      await stopSpeech(); // Stop TTS if user starts speaking
+      await stopSpeech(); 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -502,15 +505,15 @@ export default function ChatInterface({
                 <div className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800 rounded-full px-1 py-0.5 md:px-2 md:py-1 border border-slate-200 dark:border-zinc-700 animate-in fade-in zoom-in duration-200 mr-1 md:mr-2">
                     <button
                         onClick={isPaused ? resumeSpeech : pauseSpeech}
-                        className={`w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full transition-all ${isPaused ? 'text-slate-500 bg-slate-200 dark:bg-zinc-700' : 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 animate-pulse'}`}
-                        title={isPaused ? "Resume" : "Pause"}
+                        className={`w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full transition-all ${isPaused ? 'text-slate-500 bg-slate-200 dark:bg-zinc-700' : 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30'}`}
+                        title={isPaused ? "Resume Playback" : "Pause Playback"}
                     >
                         <i className={`fa-solid ${isPaused ? 'fa-play' : 'fa-pause'} text-xs md:text-sm`}></i>
                     </button>
                     <button
                         onClick={stopSpeech}
                         className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 hover:text-red-600 transition-colors"
-                        title="Stop"
+                        title="Stop Playback"
                     >
                         <i className="fa-solid fa-stop text-xs md:text-sm"></i>
                     </button>
@@ -535,44 +538,6 @@ export default function ChatInterface({
         </div>
       </div>
 
-      {/* Camera View Overlay */}
-      {isCameraOpen && (
-        <div className="absolute inset-0 z-40 bg-black flex flex-col items-center justify-center animate-in fade-in duration-300">
-          <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
-          
-          <div className="absolute top-16 left-0 right-0 flex justify-center pointer-events-none">
-            <div className="bg-slate-900/80 backdrop-blur-md border border-white/10 px-6 py-3 rounded-2xl flex flex-col items-center gap-1 shadow-2xl">
-              <span className="text-white font-medium text-sm flex items-center gap-2">
-                <i className="fa-solid fa-crop-simple text-indigo-400"></i> Center subject in view
-              </span>
-              <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
-                <span className="flex items-center gap-1"><i className="fa-regular fa-circle-dot text-white"></i> Capture</span>
-                <span className="w-1 h-1 rounded-full bg-slate-600"></span>
-                <span className="flex items-center gap-1"><i className="fa-solid fa-xmark text-white"></i> Close</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="absolute bottom-16 md:bottom-10 left-0 right-0 flex justify-center items-center gap-8">
-            <button 
-              onClick={stopCamera} 
-              className="w-14 h-14 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-full flex items-center justify-center transition-all"
-            >
-              <i className="fa-solid fa-xmark text-xl"></i>
-            </button>
-            <button 
-              onClick={captureSnapshot} 
-              className="w-20 h-20 bg-white rounded-full border-8 border-white/30 flex items-center justify-center shadow-2xl transform active:scale-90 transition-all"
-            >
-              <div className="w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center text-white">
-                <i className="fa-solid fa-camera text-2xl"></i>
-              </div>
-            </button>
-            <div className="w-14 h-14" /> {/* Spacer */}
-          </div>
-        </div>
-      )}
-
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-3 md:p-6 space-y-4 md:space-y-8 scroll-smooth">
         {messages.length === 0 && !isCameraOpen && (
@@ -592,15 +557,8 @@ export default function ChatInterface({
         {displayedMessages.map((msg) => (
           <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[95%] md:max-w-[85%] rounded-2xl p-4 md:p-5 shadow-sm transition-all group relative ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-br-none shadow-indigo-200 dark:shadow-none' : 'bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 rounded-bl-none border border-slate-200 dark:border-zinc-800'}`}>
-              {msg.attachments && msg.attachments.length > 0 && (
-                <div className="mb-3 flex flex-wrap gap-2">
-                  {msg.attachments.map((att, i) => (
-                    <img key={i} src={`data:${att.mimeType};base64,${att.data}`} alt="Snapshot" className="rounded-lg max-h-48 border border-white/20 shadow-md" />
-                  ))}
-                </div>
-              )}
               <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                     <i className={`fa-solid ${msg.role === 'user' ? 'fa-user-circle' : isPro ? 'fa-brain' : 'fa-bolt-lightning'} text-[10px] opacity-60`}></i>
                     <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest opacity-60">{msg.role === 'user' ? 'Researcher' : `${isPro ? 'Pro' : 'Flash'} Intelligence`}</span>
                     {isSpeaking === msg.id && <SpeakingWaveform isPaused={isPaused} />}
@@ -622,77 +580,12 @@ export default function ChatInterface({
             </div>
           </div>
         ))}
-
-        {(status === AppStatus.LOADING || isTranscribing) && (
-          <div className="flex justify-start w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
-             <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl rounded-bl-none p-5 shadow-2xl shadow-indigo-500/10 dark:shadow-none flex items-center gap-5 max-w-sm">
-                
-                <div className="shrink-0 relative w-14 h-14 flex items-center justify-center">
-                  
-                  {isTranscribing ? (
-                    <>
-                      <div className="absolute inset-0 bg-amber-500/10 rounded-full animate-pulse"></div>
-                      <div className="flex gap-1 items-center h-6">
-                        <div className="w-1.5 bg-amber-500 rounded-full h-3 animate-[pulse_0.5s_ease-in-out_infinite]"></div>
-                        <div className="w-1.5 bg-amber-500 rounded-full h-6 animate-[pulse_0.5s_ease-in-out_0.1s_infinite]"></div>
-                        <div className="w-1.5 bg-amber-500 rounded-full h-4 animate-[pulse_0.5s_ease-in-out_0.2s_infinite]"></div>
-                        <div className="w-1.5 bg-amber-500 rounded-full h-5 animate-[pulse_0.5s_ease-in-out_0.3s_infinite]"></div>
-                        <div className="w-1.5 bg-amber-500 rounded-full h-2 animate-[pulse_0.5s_ease-in-out_0.4s_infinite]"></div>
-                      </div>
-                    </>
-                  ) : isPro ? (
-                    <>
-                       <div className="absolute inset-0 bg-indigo-500/5 rounded-full blur-lg"></div>
-                       <div className="relative z-10 w-2 h-2 bg-indigo-600 dark:bg-indigo-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
-                       <div className="absolute w-8 h-8 border border-indigo-200 dark:border-indigo-800 rounded-lg rotate-45 animate-[spin_6s_linear_infinite]"></div>
-                       <div className="absolute w-12 h-12 rounded-full border-[1.5px] border-transparent border-t-purple-500/60 border-b-purple-500/60 animate-[spin_4s_linear_infinite_reverse]"></div>
-                       <div className="absolute w-full h-full rounded-full border border-indigo-500/10 dark:border-indigo-400/10"></div>
-                       <div className="absolute w-full h-full rounded-full border-l-2 border-indigo-500 animate-[spin_2s_ease-in-out_infinite]"></div>
-                       <div className="absolute w-10 h-10 animate-[spin_5s_linear_infinite]">
-                          <div className="w-1.5 h-1.5 bg-purple-500 rounded-full absolute -top-0.5 left-1/2 -translate-x-1/2 shadow-sm"></div>
-                       </div>
-                    </>
-                  ) : (
-                    <>
-                       <div className="absolute inset-0 rounded-full border-2 border-emerald-500/20 animate-ping"></div>
-                       <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-emerald-500 border-l-emerald-500 animate-[spin_0.4s_linear_infinite]"></div>
-                       <div className="absolute inset-2 rounded-full border-2 border-transparent border-r-emerald-400 animate-[spin_0.6s_linear_infinite_reverse]"></div>
-                       <div className="absolute inset-0 flex items-center justify-center">
-                           <i className="fa-solid fa-bolt text-emerald-500 text-lg animate-[pulse_0.2s_ease-in-out_infinite]"></i>
-                       </div>
-                    </>
-                  )}
-
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-slate-800 dark:text-zinc-100 font-bold animate-pulse">
-                      {isTranscribing ? 'Processing Audio Input...' : isPro ? 'Reasoning Deeply...' : 'Synthesizing Response...'}
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium tracking-wide">
-                    {isTranscribing ? 'Converting speech to text' : isPro ? 'Analyzing complex patterns' : 'Rapid context retrieval'}
-                  </span>
-                </div>
-             </div>
-          </div>
-        )}
         <div ref={bottomRef} className="h-4" />
       </div>
 
       {/* Input Area */}
       <div className="p-3 md:p-6 bg-white dark:bg-zinc-900 border-t border-slate-200 dark:border-zinc-800 relative z-20 shrink-0">
         <form onSubmit={handleSubmit} className="relative max-w-4xl mx-auto">
-          {pendingSnapshot && (
-            <div className="absolute -top-24 left-0 p-2 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-slate-200 dark:border-zinc-700 animate-in slide-in-from-bottom-4">
-              <div className="relative">
-                <img src={`data:${pendingSnapshot.mimeType};base64,${pendingSnapshot.data}`} alt="Snapshot" className="h-16 w-16 object-cover rounded-lg" />
-                <button type="button" onClick={() => setPendingSnapshot(null)} className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] shadow-sm hover:bg-red-600 transition-colors"><i className="fa-solid fa-xmark"></i></button>
-              </div>
-            </div>
-          )}
-          
           <div className="flex items-end gap-2 bg-slate-100 dark:bg-zinc-800/50 p-2 rounded-3xl border border-slate-200 dark:border-zinc-700 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500/50 transition-all shadow-sm">
              <button type="button" onClick={startCamera} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-indigo-500 hover:bg-white dark:hover:bg-zinc-700 transition-all shrink-0" title="Take Photo">
               <i className="fa-solid fa-camera"></i>
